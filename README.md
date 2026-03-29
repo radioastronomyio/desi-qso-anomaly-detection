@@ -3,8 +3,8 @@
 title: "DESI QSO Anomaly Detection"
 description: "ML-driven discovery of anomalous quasars in DESI DR1 spectra"
 author: "VintageDon"
-date: "2025-12-29"
-version: "2.0"
+date: "2026-03-29"
+version: "2.1"
 status: "Skeletal"
 tags:
   - type: project-root
@@ -25,13 +25,13 @@ related_documents:
 [![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
 [![Status](https://img.shields.io/badge/Status-Skeletal-lightgrey)]()
 
-![alt text](assets/desi-quasar-anomoly-detection-repo-banner.png)
+![Repository Banner](assets/desi-quasar-anomoly-detection-repo-banner.png)
 
 > Systematic discovery of statistically anomalous quasar spectra in DESI DR1 using unsupervised machine learning.
 
 This project consumes the Analysis-Ready Dataset (ARD) built by [desi-cosmic-void-galaxies](https://github.com/radioastronomyio/desi-cosmic-void-galaxies) to perform large-scale anomaly detection across ~1.6 million QSO spectra. Using a Variational Autoencoder architecture, the goal is to systematically identify rare physical states, unknown object classes, and unexpected phenomena that would be missed by traditional catalog queries.
 
-Current Status: Skeletal — repository structure established, awaiting ARD completion (Phase 05-06 in upstream project).
+Current Status: Skeletal. Repository structure established, awaiting ARD completion (Phase 05-06 in upstream project).
 
 ---
 
@@ -39,11 +39,11 @@ Current Status: Skeletal — repository structure established, awaiting ARD comp
 
 This section provides context for those less familiar with spectral anomaly detection. If you already know autoencoders and outlier detection, skip to [Data Dependencies](#-data-dependencies).
 
-![alt text](assets/desi-qso-anamoly-detection-infographic.jpg)
+![Anomaly Detection Infographic](assets/desi-qso-anamoly-detection-infographic.jpg)
 
 ### Why Anomaly Detection?
 
-Traditional astronomical analysis starts with known categories: we query for quasars, select by redshift, filter by emission line properties. This approach is powerful but inherently limited — it only finds what we already know to look for.
+Traditional astronomical analysis starts with known categories: we query for quasars, select by redshift, filter by emission line properties. This approach is powerful but inherently limited; it only finds what we already know to look for.
 
 Anomaly detection inverts this: instead of asking "which objects match my criteria?", we ask "which objects don't fit the normal pattern?" This enables discovery of:
 
@@ -54,13 +54,13 @@ Anomaly detection inverts this: instead of asking "which objects match my criter
 
 ### How Does It Work?
 
-A Variational Autoencoder (VAE) learns to compress spectra into a low-dimensional latent space and reconstruct them. Most spectra compress and reconstruct well — they're "normal" in the statistical sense. Anomalies are spectra the model struggles with:
+A Variational Autoencoder (VAE) learns to compress spectra into a low-dimensional latent space and reconstruct them. Most spectra compress and reconstruct well; they're "normal" in the statistical sense. Anomalies are spectra the model struggles with:
 
 - High reconstruction error: The output doesn't match the input
 - Latent space isolation: The compressed representation is far from other objects
 - KL divergence: The encoding doesn't fit the learned distribution
 
-By combining these metrics, we identify spectra that warrant human inspection — the "unknown unknowns" hiding in 1.6 million objects.
+By combining these metrics, we identify spectra that warrant human inspection, the "unknown unknowns" hiding in 1.6 million objects.
 
 ### The DESI Opportunity
 
@@ -70,7 +70,7 @@ DESI DR1 is the largest uniform spectroscopic QSO sample ever assembled. The she
 
 ## 📦 Data Dependencies
 
-This project is an ARD consumer — it does not perform primary data ingestion. All catalog data and spectral embeddings come from the upstream ARD factory.
+This project is an ARD consumer; it does not perform primary data ingestion. All catalog data and spectral embeddings come from the upstream ARD factory.
 
 ### Upstream Provider
 
@@ -94,8 +94,8 @@ This project is an ARD consumer — it does not perform primary data ingestion. 
 
 | Asset | Location | Purpose |
 |-------|----------|---------|
-| QSO Parquet tiles | proj-fs02 network share | Raw spectra for validation |
-| Linkage index | PostgreSQL (proj-pg01) | TARGETID → tile mapping |
+| QSO Parquet tiles | radio-fs02 (10.25.20.15) | Raw spectra for validation |
+| Linkage index | PostgreSQL (radio-pgsql01) | TARGETID to tile mapping |
 
 Note: The core ML metrics (LATENT_VEC, RECON_MSE, ANOMALY_SCORE) are computed upstream as Tier 2 ARD columns. This project focuses on candidate validation and scientific interpretation rather than model training.
 
@@ -153,7 +153,7 @@ graph TD
     subgraph "Upstream ARD"
         A1[desi-cosmic-void-galaxies<br/>ARD Factory] --> A2[ard.qso_ard<br/>Materialized Table]
         A1 --> A3[Tier 2 Compute<br/>Embeddings + Scores]
-        A1 --> A4[Parquet Spectral Tiles<br/>proj-fs02]
+        A1 --> A4[Parquet Spectral Tiles<br/>radio-fs02]
     end
     
     subgraph "This Project"
@@ -194,7 +194,7 @@ graph TD
 
 Before work begins on this project:
 
-1. ARD Phase 05-06 must complete — validates QSO catalog
+1. ARD Phase 05-06 must complete (validates QSO catalog)
 2. ARD Phase 07 (Tier 2 compute) must generate spectral embeddings
 3. LATENT_VEC, RECON_MSE, ANOMALY_SCORE columns must be populated
 
@@ -202,35 +202,37 @@ Before work begins on this project:
 
 ## 📁 Repository Structure
 
-```markdown
-desi-qso-anomaly-detection/
-├── 📚 docs/                          # Documentation
-│   ├── data-science-infrastructure.md
-│   └── documentation-standards/
-├── 🔬 src/                           # Source code (to be developed)
-├── 🚀 scripts/                       # Analysis pipelines (to be developed)
-├── 📊 notebooks/                     # Validation notebooks (to be developed)
-├── 🌐 web/                           # Validation UI (to be developed)
-├── 🧪 tests/                         # Unit tests (to be developed)
-├── 📂 work-logs/                     # Milestone documentation
-│   └── 01-ideation-and-setup/
-├── 💾 data/                          # Local data cache (gitignored)
-├── 🗒️ scratch/                       # Session checkpoints
-└── 📝 README.md                      # This file
 ```
+desi-qso-anomaly-detection/
+├── 📂 assets/                        # Images, diagrams, banners
+├── 📂 docs/
+│   ├── 📂 documentation-standards/   # Templates, tagging strategy
+│   └── 📄 data-science-infrastructure.md
+├── 📂 internal-files/                # Working documents
+├── 📂 shared/                        # Cross-cutting assets
+├── 📂 spec/                          # Specifications
+├── 📂 staging/                       # Staged work
+├── 📂 work-logs/                     # Milestone documentation
+├── 📄 AGENTS.md                      # Agent instructions
+├── 📄 CLAUDE.md                      # Pointer to AGENTS.md
+├── 📄 LICENSE
+├── 📄 LICENSE-DATA
+└── 📄 README.md                      # This file
+```
+
+Code directories (`src/`, `scripts/`, `notebooks/`, `tests/`) will be created when upstream ARD dependencies are met and active development begins.
 
 ---
 
 ## 🖥️ Infrastructure
 
-This project runs on the [Proxmox Astronomy Lab](https://github.com/radioastronomyio/proxmox-astronomy-lab) cluster.
+This project runs on the [radioastronomy.io](https://github.com/radioastronomyio/proxmox-astronomy-lab) research cluster.
 
-| Resource | Node | Purpose |
+| Resource | Host | Purpose |
 |----------|------|---------|
-| PostgreSQL 16 | proj-pg01 | ARD queries, candidate ranking |
-| Spectral tiles | proj-fs02 | QSO spectra for validation |
-| GPU compute | radio-gpu01 | Embedding inference (if needed locally) |
-| Python processing | proj-dp01 | Validation pipeline |
+| PostgreSQL 16 | radio-pgsql01 (10.25.20.8) | ARD queries, candidate ranking |
+| Spectral tiles | radio-fs02 (10.25.20.15) | QSO spectra for validation |
+| GPU compute | ML01 (A4000, 16GB) | Embedding inference, model training |
 
 ---
 
@@ -256,16 +258,16 @@ This project runs on the [Proxmox Astronomy Lab](https://github.com/radioastrono
 
 ## 📜 License
 
-This project is licensed under the MIT License — see [LICENSE](LICENSE) for details.
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
 
 ---
 
 ## 🙏 Acknowledgments
 
-- [DESI Collaboration](https://www.desi.lbl.gov/) — Data Release 1 public data
-- Spender development team — Spectral embedding architecture
-- AGN/QSO VAC team — BAL identification and QSO properties
+- [DESI Collaboration](https://www.desi.lbl.gov/) for Data Release 1 public data
+- Spender development team for spectral embedding architecture
+- AGN/QSO VAC team for BAL identification and QSO properties
 
 ---
 
-Last Updated: December 29, 2025 | Status: Skeletal (Awaiting ARD + Embeddings)
+Last Updated: 2026-03-29 | Status: Skeletal (Awaiting ARD + Embeddings)

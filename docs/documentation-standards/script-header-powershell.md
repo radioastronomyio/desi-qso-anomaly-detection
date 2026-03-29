@@ -1,8 +1,8 @@
 # PowerShell Script Header Template
 
-> Template Version: 1.0  
-> Applies To: All `.ps1` files in desi-qso-anomaly-detection  
-> Last Updated: 2025-12-29
+> Template Version: 2.0
+> Applies To: All `.ps1` files
+> Last Updated: 2026-03-29
 
 ---
 
@@ -19,10 +19,8 @@
 
 .NOTES
     Repository  : desi-qso-anomaly-detection
-    Author      : VintageDon (https://github.com/vintagedon)
-    ORCID       : 0009-0008-7695-4093
+    Author      : VintageDon (https://github.com/vintagedon/)
     Created     : YYYY-MM-DD
-    Phase       : [Phase XX - Phase Name]
 
 .EXAMPLE
     .\script-name.ps1
@@ -65,21 +63,10 @@
 |-------|----------|-------------|
 | `.SYNOPSIS` | Yes | Single line, verb-led description |
 | `.DESCRIPTION` | Yes | Expanded explanation of purpose and behavior |
-| `.NOTES` | Yes | Static metadata (repository, author, ORCID, dates, phase) |
+| `.NOTES` | Yes | Static metadata (repository, author, dates) |
 | `.EXAMPLE` | Yes | At least one usage example with description |
 | `.LINK` | Yes | Repository URL |
 | `.PARAMETER` | If applicable | Document any script parameters |
-
----
-
-## Phase Reference
-
-| Phase | Name |
-|-------|------|
-| Phase 01 | Candidate Ranking |
-| Phase 02 | Visual Validation |
-| Phase 03 | Cross-Match |
-| Phase 04 | Catalog Release |
 
 ---
 
@@ -106,24 +93,21 @@ Standard sections (in order):
 ```powershell
 <#
 .SYNOPSIS
-    Validates anomaly classification labels for consistency.
+    Validates configuration files across all subdirectories.
 
 .DESCRIPTION
-    Scans the validation output directory and checks that all classified
-    anomalies have required metadata fields and valid category labels.
-    Reports any incomplete or inconsistent classifications.
+    Scans all subdirectories and validates that each config file
+    is syntactically correct. Outputs a summary of validation results.
 
 .NOTES
     Repository  : desi-qso-anomaly-detection
-    Author      : VintageDon (https://github.com/vintagedon)
-    ORCID       : 0009-0008-7695-4093
-    Created     : 2025-12-29
-    Phase       : Phase 02 - Visual Validation
+    Author      : VintageDon (https://github.com/vintagedon/)
+    Created     : YYYY-MM-DD
 
 .EXAMPLE
-    .\validate-classifications.ps1
+    .\validate-configs.ps1
 
-    Validates all classification files in the default output directory.
+    Validates all configuration files in the repository.
 
 .LINK
     https://github.com/radioastronomyio/desi-qso-anomaly-detection
@@ -133,13 +117,14 @@ Standard sections (in order):
 # Configuration
 # =============================================================================
 
-$classificationPath = "\\proj-fs02\desi-anomaly\classifications"
+$RepoRoot = Split-Path -Parent $PSScriptRoot
 
 # =============================================================================
 # Execution
 # =============================================================================
 
-Get-ChildItem -Path $classificationPath -Filter "*.json" | ForEach-Object {
+Get-ChildItem -Path $RepoRoot -Recurse -Filter "*.config" | ForEach-Object {
+    Write-Host "Validating: $($_.FullName)"
     # Validation logic here
 }
 ```
@@ -151,4 +136,4 @@ Get-ChildItem -Path $classificationPath -Filter "*.json" | ForEach-Object {
 - PowerShell comment-based help (`.SYNOPSIS`, `.DESCRIPTION`, etc.) enables `Get-Help script-name.ps1`
 - Keep `.SYNOPSIS` under 80 characters
 - Use present tense, active voice ("Validates..." not "This script validates...")
-- Phase field should match work-log phase names exactly
+- See [code-commenting-dual-audience.md](code-commenting-dual-audience.md) for AI NOTE conventions

@@ -1,17 +1,17 @@
 <!--
 ---
 title: "Tagging Strategy"
-description: "Controlled vocabulary for document classification and RAG retrieval in desi-qso-anomaly-detection"
-author: "VintageDon - https://github.com/vintagedon"
-ai_contributor: "Claude Opus 4.5 (Anthropic)"
-date: "2025-12-29"
-version: "1.0"
+description: "Controlled vocabulary for document classification in desi-qso-anomaly-detection"
+author: "VintageDon (https://github.com/vintagedon/)"
+date: "2026-03-29"
+version: "2.0"
 tags:
+  - type: guide
   - domain: documentation
-  - type: specification
 related_documents:
   - "[Interior README Template](interior-readme-template.md)"
   - "[General KB Template](general-kb-template.md)"
+  - "[Worklog README Template](worklog-readme-template.md)"
 ---
 -->
 
@@ -19,109 +19,125 @@ related_documents:
 
 ## 1. Purpose
 
-This document defines the controlled tag vocabulary for all documentation in desi-qso-anomaly-detection, enabling consistent classification for human navigation and RAG system retrieval.
+Controlled tag vocabulary for the desi-qso-anomaly-detection repository. Consistent tagging enables human navigation and RAG system retrieval.
 
 ---
 
-## 2. Scope
+## 2. Why Controlled Vocabulary
 
-Covers all tag categories, valid values, and usage guidance. Does not cover front-matter field structure—see individual templates for field requirements.
+Uncontrolled tagging leads to synonyms fragmenting search, inconsistent granularity, and tag proliferation that reduces signal. A controlled vocabulary defines allowed values upfront, ensuring consistency across contributors and time.
 
 ---
 
 ## 3. Tag Categories
 
-### Phase Tags
+| Category | Question Answered | Required |
+|----------|-------------------|----------|
+| `type` | What kind of document is this? | Yes |
+| `domain` | What subject area? | Yes |
+| `status` | What's the lifecycle state? | Recommended |
+| `tech` | What technologies involved? | When applicable |
 
-Pipeline execution phases. Documents may belong to multiple phases.
+---
+
+## 4. Domain Tags
+
+| Tag | Use For | Boundary |
+|-----|---------|----------|
+| `anomaly-detection` | VAE architecture, scoring, candidate ranking, outlier methods | The ML pipeline itself, not the science interpretation |
+| `spectral-analysis` | Spectra handling, rest-frame transforms, diagnostic plots, validation | Working with spectral data, not catalog-level queries |
+| `ard-consumer` | Upstream ARD dependencies, column requirements, data contracts | Interfaces with the ARD, not ARD internals |
+| `cross-match` | Multi-wavelength catalog matching, external survey integration | Connecting anomalies to WISE, GALEX, X-ray, etc. |
+| `science` | Physical interpretation, classification, discovery papers | The science output, not the engineering |
+| `infrastructure` | Compute resources, database access, environment setup | Cluster resources and connectivity |
+| `documentation` | Templates, standards, meta-content about the repo itself | Docs about docs |
+
+---
+
+## 5. Type Tags
+
+| Tag | Use For |
+|-----|---------|
+| `project-root` | Repository root README |
+| `directory-readme` | Interior README for any directory |
+| `worklog` | Work log entries and milestone documentation |
+| `guide` | Step-by-step procedures and how-to documents |
+| `reference` | Lookup information: schemas, API docs, data dictionaries |
+| `specification` | Formal requirements and design specs |
+| `report` | Analysis findings, validation results, summaries |
+
+---
+
+## 6. Status Tags
 
 | Tag | Description |
 |-----|-------------|
-| `phase-01` | Candidate ranking (ARD queries, anomaly scoring) |
-| `phase-02` | Visual validation (human review, classification) |
-| `phase-03` | Cross-match (multi-wavelength context) |
-| `phase-04` | Catalog release (curation, publication) |
-
-**Usage**: Tag with all phases a document supports. A methodology doc explaining validation UI used in phases 02-03 would carry `phase-02`, `phase-03`.
-
----
-
-### Domain Tags
-
-Primary functional area. Usually one per document.
-
-| Tag | Description |
-|-----|-------------|
-| `candidate-ranking` | ARD queries, anomaly score filtering |
-| `visual-validation` | Human review interface, classification |
-| `crossmatch` | Multi-wavelength catalog joins |
-| `catalog` | Curation, formatting, release |
-| `ml-pipeline` | VAE architecture, embeddings (upstream reference) |
-| `documentation` | Methodology, specifications, standards |
-| `infrastructure` | Database, storage, compute configuration |
-
-**Usage**: Choose the primary domain. A document about validating anomaly classifications is `visual-validation`, not `catalog`.
+| `draft` | In development, not yet complete |
+| `active` | Current, maintained, approved |
+| `under-review` | Review in progress |
+| `deprecated` | Superseded, avoid for new work |
+| `archived` | Historical reference only |
 
 ---
 
-### Type Tags
+## 7. Tech Tags
 
-Document purpose and structure.
-
-| Tag | Description |
-|-----|-------------|
-| `methodology` | How we do something |
-| `reference` | Lookup information (scoring thresholds, categories) |
-| `guide` | Step-by-step procedures |
-| `decision-record` | Why we chose X over Y |
-| `specification` | Formal requirements |
-| `source-code` | Code files and scripts |
-| `configuration` | Config files, parameters |
-| `data-manifest` | Data inventory and provenance |
-
-**Usage**: One type per document. If a document explains both *how* and *why*, choose the dominant purpose.
+| Tag | Technology |
+|-----|-----------|
+| `python` | Python scripts and modules |
+| `pytorch` | PyTorch model code |
+| `postgresql` | Database queries and schemas |
+| `parquet` | Spectral data format |
+| `desi` | DESI-specific tools and APIs |
+| `bash` | Shell scripts |
 
 ---
 
-### Tech Tags
+## 8. Implementation
 
-Data sources and external dependencies.
+### Standard Frontmatter
 
-| Tag | Description |
-|-----|-------------|
-| `desi-dr1` | DESI Data Release 1 base data |
-| `ard` | Analysis-Ready Dataset (upstream) |
-| `agn-vac` | AGN/QSO Summary Value-Added Catalog |
-| `pytorch` | PyTorch ML framework |
-| `spender` | Spender autoencoder architecture |
-| `postgresql` | PostgreSQL database |
-| `parquet` | Parquet file format |
+```yaml
+<!--
+---
+title: "Document Title"
+description: "What this document covers"
+author: "VintageDon (https://github.com/vintagedon/)"
+date: "YYYY-MM-DD"
+version: "1.0"
+status: "Active"
+tags:
+  - type: guide
+  - domain: anomaly-detection
+  - tech: [python, pytorch]
+related_documents:
+  - "[Related Doc](path/to/doc.md)"
+---
+-->
+```
 
-**Usage**: Tag when the document is specific to that data source or technology. A general methodology doc doesn't need `pytorch`; a doc about VAE architecture does.
+### Conventions
+
+- Use lowercase, hyphenated values
+- Tech tags use canonical names
+- One value per line for readability, or array syntax for multi-value
+- `related_documents` links use relative paths within the repo
 
 ---
 
-### ML Layer Tags
+## 9. Maintaining the Vocabulary
 
-For analysis-specific documentation.
-
-| Tag | Description |
-|-----|-------------|
-| `embeddings` | Latent space representations |
-| `reconstruction` | VAE reconstruction metrics |
-| `anomaly-scores` | Isolation Forest, combined scoring |
-
-**Usage**: Tag methodology and results documents with the layer(s) they address.
+- This document is the authoritative source for allowed tag values
+- Prefer broader tags over proliferating specific ones
+- Check for existing coverage before adding new tags
+- Backfill existing documents when adding new tags
 
 ---
 
-## 4. References
+## 10. References
 
-| Reference | Link |
-|-----------|------|
-| Main README | [../../README.md](../../README.md) |
-| Interior README Template | [interior-readme-template.md](interior-readme-template.md) |
-| General KB Template | [general-kb-template.md](general-kb-template.md) |
-| Upstream ARD Schema | [desi-cosmic-void-galaxies ARD Schema](https://github.com/radioastronomyio/desi-cosmic-void-galaxies/blob/main/docs/ARD-SCHEMA-v2.md) |
-
----
+| Resource | Description |
+|----------|-------------|
+| [Interior README Template](interior-readme-template.md) | Shows tag usage in directory READMEs |
+| [General KB Template](general-kb-template.md) | Shows tag usage for standalone docs |
+| [Worklog README Template](worklog-readme-template.md) | Shows tag usage for work log entries |

@@ -19,14 +19,14 @@ config.local.*
 # ----------------------------------------------------------------------------
 *-pending.md
 staging/
+spec/
+internal-files/
 
 # ----------------------------------------------------------------------------
 # IDE & EDITOR
 # ----------------------------------------------------------------------------
 .vscode/
 .idea/
-.kilocode/
-.kiro/
 .markdownlint.json
 cspell.json
 *.swp
@@ -164,9 +164,6 @@ wandb/
 outputs/
 runs/
 
-# Weights & Biases
-wandb/
-
 # TensorBoard
 logs/
 tensorboard/
@@ -201,12 +198,6 @@ site/
 *.log
 *.tmp
 *.temp
-
-# Sphinx
-docs/_build/
-
-# MkDocs
-site/
 
 # ----------------------------------------------------------------------------
 # OS GENERATED

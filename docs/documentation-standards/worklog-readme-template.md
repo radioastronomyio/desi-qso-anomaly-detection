@@ -1,23 +1,20 @@
 <!--
 ---
-title: "[Phase NN]: [Phase Name]"
-description: "What was accomplished in this milestone"
-author: "VintageDon"
+title: "[Brief Title of Work]"
+description: "What was accomplished"
+author: "VintageDon (https://github.com/vintagedon/)"
 date: "YYYY-MM-DD"
 version: "1.0"
 status: "Complete|In Progress|Blocked"
 tags:
   - type: worklog
-  - domain: [anomaly-detection/ml-pipeline/validation]
-  - phase: [ranking/validation/crossmatch/catalog]
-  - tech: [python/pytorch/postgresql/desi]
+  - domain: [see tagging-strategy.md for allowed values]
 related_documents:
-  - "[Previous Phase](../NN-previous/README.md)"
-  - "[Next Phase](../NN-next/README.md)"
+  - "[Related Doc](path/to/doc.md)"
 ---
 -->
 
-# Phase NN: [Phase Name]
+# [Brief Title of Work]
 
 ## Summary
 
@@ -25,65 +22,32 @@ related_documents:
 |-----------|-------|
 | Status | ✅ Complete / 🔄 In Progress / ⛔ Blocked |
 | Sessions | N |
-| Artifacts | N scripts, N configs, N figures |
+| Artifacts | N scripts, N configs, N docs |
 
-Objective: [What this phase set out to accomplish. 1-2 sentences.]
+Objective: [What this work set out to accomplish. 1-2 sentences.]
 
 Outcome: [What was achieved. 1-2 sentences.]
 
 ---
 
-## 1. Contents
+## 1. Work Completed
 
-```
-NN-phase-name/
-├── 01-script-name.py       # What it does
-├── 01-output.log           # Output from script 01
-├── 02-another-script.py    # What it does
-├── figures/
-│   └── 01-figure-name.png  # What it shows
-├── logs/
-└── README.md               # This file
-```
+| Task | Description | Result |
+|------|-------------|--------|
+| [Task 1] | What was done | Outcome |
+| [Task 2] | What was done | Outcome |
 
 ---
 
-## 2. Scripts
+## 2. Files Changed
 
-| Script | Purpose | Key Output |
-|--------|---------|------------|
-| `01-script-name.py` | What it does | What it produces |
-| `02-another-script.py` | What it does | What it produces |
-
----
-
-## 3. Validation
-
-| Check | Status | Evidence |
-|-------|--------|----------|
-| [What was validated] | ✅ Pass | [How confirmed] |
-| [What was validated] | ✅ Pass | [How confirmed] |
+| File | Change |
+|------|--------|
+| [path/to/file](path/to/file) | Added / Updated / Created |
 
 ---
 
-## 4. Figures
-
-### Figure 01: [Title]
-
-![Description](figures/01-figure-name.png)
-
-[1-2 sentences: What this figure shows and what it confirms.]
-
----
-
-## 5. Findings
-
-### Key Results
-
-- [Finding 1]
-- [Finding 2]
-
-### Issues Encountered
+## 3. Issues Encountered
 
 | Issue | Resolution |
 |-------|------------|
@@ -91,52 +55,39 @@ NN-phase-name/
 
 ---
 
-## 6. Next Phase
+## 4. Next Steps
 
-Handoff: [What's ready for the next phase and where it lives.]
-
-Next Steps:
+Handoff: [What's ready for follow-on work and where it lives.]
 
 1. [Immediate action]
 2. [Immediate action]
 
 ---
 
-## 7. Provenance
-
-| | |
-|---|---|
-| Compute | [Node(s) used] |
-| Data Location | [Where inputs/outputs live] |
-| Date Range | YYYY-MM-DD to YYYY-MM-DD |
-
----
-
 <!--
 TEMPLATE USAGE NOTES (remove when using):
 
-1. FRONTMATTER: Always include. Links this to phase sequence.
+1. FRONTMATTER: Always include. Tags must use values from
+   docs/documentation-standards/tagging-strategy.md.
 
-2. SEMANTIC NUMBERING: Preserve gaps if sections omitted.
+2. NAMING: Work logs are date-based by default.
+   - File: worklog-YYYY-MM-DD.md (or worklog-YYYY-MM-DD-brief-topic.md)
+   - Related entries can be gathered into milestone directories later
+     as patterns emerge.
 
-3. NAMING CONVENTION:
-   - Scripts: NN-descriptive-name.py
-   - Outputs share prefix: 01-script.py → 01-output.log
-   - Figures: NN-description.png
+3. SEMANTIC NUMBERING: Preserve gaps if sections omitted.
 
 4. SECTIONS:
    - Summary: Always (the quick overview)
-   - §1 Contents: Always (directory tree)
-   - §2 Scripts: Always (what was built)
-   - §3 Validation: Include if validation performed
-   - §4 Figures: Include if figures produced
-   - §5 Findings: Include if insights worth capturing
-   - §6 Next Phase: Include if not final phase
-   - §7 Provenance: Always (reproducibility)
+   - §1 Work Completed: Always (what was done)
+   - §2 Files Changed: Include if repo files were modified
+   - §3 Issues Encountered: Include if problems worth documenting
+   - §4 Next Steps: Include if follow-on work is identified
 
-5. INLINE FIGURES: Embed key figures with descriptions.
-   Don't just list them—explain what they show.
+5. KEEP IT LEAN: This documents work done, not work planned.
+   Capture what matters for understanding progress.
 
-6. KEEP IT LEAN: This documents work done, not work planned.
-   Capture what matters for reproducibility and understanding.
+6. SOURCE ATTRIBUTION: Use an HTML comment at the bottom to note
+   the conversation source if the worklog was derived from a chat session.
+   Example: <!-- Source: Claude.ai project session, YYYY-MM-DD -->
 -->

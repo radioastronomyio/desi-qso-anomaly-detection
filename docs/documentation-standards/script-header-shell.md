@@ -1,8 +1,8 @@
 # Shell Script Header Template
 
-> Template Version: 1.0  
-> Applies To: All `.sh` files in desi-qso-anomaly-detection  
-> Last Updated: 2025-12-29
+> Template Version: 2.0
+> Applies To: All `.sh` files
+> Last Updated: 2026-03-29
 
 ---
 
@@ -14,10 +14,8 @@
 # Script Name  : script-name.sh
 # Description  : [One-line description of what the script does]
 # Repository   : desi-qso-anomaly-detection
-# Author       : VintageDon (https://github.com/vintagedon)
-# ORCID        : 0009-0008-7695-4093
+# Author       : VintageDon (https://github.com/vintagedon/)
 # Created      : YYYY-MM-DD
-# Phase        : [Phase XX - Phase Name]
 # Link         : https://github.com/radioastronomyio/desi-qso-anomaly-detection
 # =============================================================================
 #
@@ -72,24 +70,11 @@ main "$@"
 | Description | Yes | Single line, verb-led description |
 | Repository | Yes | Repository name |
 | Author | Yes | Name with GitHub profile link |
-| ORCID | Yes | Author ORCID identifier |
 | Created | Yes | Creation date (YYYY-MM-DD) |
-| Phase | Yes | Pipeline phase this script belongs to |
 | Link | Yes | Full repository URL |
 | DESCRIPTION block | Yes | Expanded multi-line explanation |
 | USAGE block | Yes | Command syntax |
 | EXAMPLES block | Yes | At least one usage example |
-
----
-
-## Phase Reference
-
-| Phase | Name |
-|-------|------|
-| Phase 01 | Candidate Ranking |
-| Phase 02 | Visual Validation |
-| Phase 03 | Cross-Match |
-| Phase 04 | Catalog Release |
 
 ---
 
@@ -128,67 +113,8 @@ main "$@"
 echo "${variable}"
 
 # Use lowercase for local variables, UPPERCASE for exports/constants
-local data_path="/mnt/proj-fs02/desi-dr1"
-export DATA_ROOT="/mnt/proj-fs02/desi-dr1"
-```
-
----
-
-## Example: Minimal Script
-
-```bash
-#!/usr/bin/env bash
-# =============================================================================
-# Script Name  : fetch-validation-spectra.sh
-# Description  : Retrieves spectral tiles for anomaly candidate validation
-# Repository   : desi-qso-anomaly-detection
-# Author       : VintageDon (https://github.com/vintagedon)
-# ORCID        : 0009-0008-7695-4093
-# Created      : 2025-12-29
-# Phase        : Phase 02 - Visual Validation
-# Link         : https://github.com/radioastronomyio/desi-qso-anomaly-detection
-# =============================================================================
-#
-# DESCRIPTION
-#   Reads a candidate list CSV and retrieves corresponding spectral tiles
-#   from the proj-fs02 network share. Copies tiles to local cache for
-#   validation plotting.
-#
-# USAGE
-#   ./fetch-validation-spectra.sh candidates.csv
-#
-# EXAMPLES
-#   ./fetch-validation-spectra.sh candidates.csv
-#       Fetches spectra for all candidates in the input file.
-#
-# =============================================================================
-
-set -euo pipefail
-
-# =============================================================================
-# Configuration
-# =============================================================================
-
-SPECTRAL_ROOT="/mnt/proj-fs02/desi-dr1/spectral-tiles"
-LOCAL_CACHE="/home/user/validation-cache"
-
-# =============================================================================
-# Main
-# =============================================================================
-
-main() {
-    local candidate_file="${1:-}"
-    
-    if [[ -z "${candidate_file}" ]]; then
-        echo "Usage: $0 <candidate_file.csv>"
-        exit 1
-    fi
-    
-    echo "Fetching spectra from ${SPECTRAL_ROOT}"
-    echo "Local cache: ${LOCAL_CACHE}"
-}
-
-main "$@"
+local data_path="/var/lib/data"
+export DATA_ROOT="/var/lib/data"
 ```
 
 ---
@@ -197,6 +123,7 @@ main "$@"
 
 - Always use `#!/usr/bin/env bash` for portability
 - `set -euo pipefail` catches common errors early
-- Use `main()` function pattern even for simple scripts — it's easier to extend
+- Use `main()` function pattern even for simple scripts
 - Keep Description line under 80 characters
-- Use present tense, active voice ("Retrieves..." not "This script retrieves...")
+- Use present tense, active voice ("Initializes..." not "This script initializes...")
+- See [code-commenting-dual-audience.md](code-commenting-dual-audience.md) for AI NOTE conventions
