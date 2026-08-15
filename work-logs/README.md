@@ -22,8 +22,9 @@ Development history organized by milestone. Each phase is self-contained: script
 
 ```
 work-logs/
-├── 01-ideation-and-setup/        # Repository initialization and planning
-└── README.md                      # This file
+├── 01-ideation-and-setup/                      # Repository initialization and planning
+├── 2026-08-15-spectral-manifest-audit.md       # Stage 0 gate findings for the DESI DR1 QSO Parquet corpus
+└── README.md                                   # This file
 ```
 
 ---
@@ -33,8 +34,9 @@ work-logs/
 | Phase | Name | Status | Date |
 |-------|------|--------|------|
 | [01](01-ideation-and-setup/README.md) | Ideation and Setup | ✅ Complete | Dec 2025 |
+| [Spectral Manifest Audit](2026-08-15-spectral-manifest-audit.md) | Stage 0 gate: corpus audit and v1 manifest artifacts | ✅ Complete | Aug 2026 |
 
-**Note**: This project is an ARD consumer. Active development phases will begin after upstream ARD completion (desi-cosmic-void-galaxies Phases 05-07), including Tier 2 embedding computation.
+**Note**: This project is an ARD consumer. Stage 0 established the corpus contract locally; model training, embeddings, and anomaly scoring happen in this repo rather than upstream.
 
 ---
 

@@ -1,3 +1,17 @@
+<!--
+---
+title: "Shared"
+description: "Cross-project utilities and scripts used across repositories"
+author: "VintageDon (https://github.com/vintagedon/)"
+date: "2026-08-15"
+version: "1.0"
+status: "Active"
+tags:
+  - type: directory-readme
+  - domain: documentation
+---
+-->
+
 # Shared
 
 Cross-project utilities and scripts used consistently across repositories.
@@ -47,4 +61,4 @@ python shared/generate_tree.py .
 |-------|-------|
 | Maintainer | [@vintagedon](https://github.com/vintagedon) |
 | Created | 2025-01-01 |
-| Last Updated | 2025-01-01 |
+| Last Updated | 2026-08-15 |

@@ -1,16 +1,32 @@
+<!--
+---
+title: "Dual-Audience Code Commenting Standard"
+description: "Code comment conventions serving human readers and AI agents"
+author: "VintageDon (https://github.com/vintagedon/)"
+date: "2026-08-15"
+version: "1.0"
+status: "Active"
+tags:
+  - type: guide
+  - domain: documentation
+related_documents:
+  - "[Writing Style Guide](writing-style-guide.md)"
+---
+-->
+
 # Dual-Audience Code Commenting Standard
 
 ## Philosophy
 
-AI-assisted coding is standard practice. Code comments now serve two audiences: humans who need to understand intent, and agents who need to understand constraints. This isn't commenting theatre—annotate where it matters, not everywhere.
+AI-assisted coding is standard practice. Code comments now serve two audiences: humans who need to understand intent, and agents who need to understand constraints. This isn't commenting theatre; annotate where it matters, not everywhere.
 
 ## Default: Human-First
 
 Good human comments already serve agents well. Default to explaining:
 
-- Intent — What is this trying to accomplish?
-- Context — Why this approach over alternatives?
-- Domain knowledge — What would a reader need to know?
+- Intent: What is this trying to accomplish?
+- Context: Why this approach over alternatives?
+- Domain knowledge: What would a reader need to know?
 
 ```python
 # van Dokkum et al. report ~30,000 seconds of HST integration. This check
@@ -27,7 +43,7 @@ This serves both audiences. An agent reading this understands what the code does
 Use `# AI NOTE:` when there's a non-obvious constraint that could cause subtle bugs. The test: *Would careful reading reveal this, or could an agent break something?*
 
 ```python
-# AI NOTE: Do not sum both original_flc and hap_flc — they represent 
+# AI NOTE: Do not sum both original_flc and hap_flc; they represent
 # the same physical exposures with different calibration. Double-counting
 # is a validation-breaking bug.
 ```
@@ -38,7 +54,7 @@ def check_result(name: str, status: str, ...) -> dict:
     Create a standardized check result dictionary.
     ...
     """
-    # AI NOTE: 'status' key is required — generate_markdown_report() and 
+    # AI NOTE: 'status' key is required; generate_markdown_report() and
     # exit code logic depend on it. New status values require updating 
     # status_icons dict in generate_markdown_report().
 ```
@@ -62,13 +78,13 @@ def check_result(name: str, status: str, ...) -> dict:
 
 ## Anti-Patterns
 
-Commenting theatre — Mandatory markers on every function regardless of complexity.
+Commenting theatre: Mandatory markers on every function regardless of complexity.
 
-Restating code — `# increment counter by 1` adds nothing for either audience.
+Restating code: `# increment counter by 1` adds nothing for either audience.
 
-Missing where it matters — No AI NOTE on a function with hidden cross-module dependencies.
+Missing where it matters: No AI NOTE on a function with hidden cross-module dependencies.
 
-Documentation substitute — Comments don't replace proper docstrings, READMEs, or architecture docs.
+Documentation substitute: Comments don't replace proper docstrings, READMEs, or architecture docs.
 
 ## Integration
 

@@ -3,8 +3,8 @@
 title: "Assets"
 description: "Static assets for repository documentation and branding"
 author: "VintageDon"
-date: "2025-12-29"
-version: "1.0"
+date: "2026-08-15"
+version: "1.1"
 status: "Active"
 tags:
   - type: directory-readme
@@ -22,9 +22,11 @@ Static assets for repository documentation and branding.
 
 ```
 assets/
+├── background-section-infographic.jpg            # Background section infographic
 ├── desi-qso-anamoly-detection-infographic.jpg    # Scientific overview graphic
 ├── desi-quasar-anomoly-detection-repo-banner.png # Repository header banner
-└── README.md                                      # This file
+├── repo-banner.jpg                               # Generic repository banner
+└── README.md                                     # This file
 ```
 
 ---
@@ -33,8 +35,10 @@ assets/
 
 | File | Description |
 |------|-------------|
-| `desi-qso-anamoly-detection-infographic.jpg` | Scientific infographic explaining anomaly detection methodology |
-| `desi-quasar-anomoly-detection-repo-banner.png` | Banner image for README header |
+| `background-section-infographic.jpg` | Infographic intended for the README background section; not currently referenced |
+| `desi-qso-anamoly-detection-infographic.jpg` | Scientific infographic explaining anomaly detection methodology, embedded in the root README |
+| `desi-quasar-anomoly-detection-repo-banner.png` | Banner image for the root README header |
+| `repo-banner.jpg` | Generic repository banner; not currently referenced |
 
 ---
 
