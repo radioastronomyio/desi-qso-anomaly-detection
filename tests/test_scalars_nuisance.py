@@ -59,6 +59,7 @@ from dqad_audit import (
     Z_BROAD_BINS,
     build_bin_selection,
     build_nuisance_block,
+    build_redshift_block,
     build_redshift_summary,
     build_scalars_run_config,
     common_rest_interval,
@@ -261,6 +262,14 @@ def test_z_histogram_under_and_overflow() -> None:
     nonfinite = z_histogram([0.1, float("nan"), float("inf"), 0.3], 0.1)
     assert nonfinite["count_nonfinite_excluded"] == 2
     assert nonfinite["count_inside"] == 2
+
+
+def test_redshift_block_histogram_reports_nonfinite_exclusions() -> None:
+    block = build_redshift_block([0.1, float("nan"), float("inf"), 0.3])
+    assert block["count_nonfinite"] == 2
+    assert block["count_finite"] == 2
+    assert block["histogram"]["count_nonfinite_excluded"] == 2
+    assert block["histogram"]["count_inside"] == 2
 
 
 def test_quantile_profile_spot_values() -> None:

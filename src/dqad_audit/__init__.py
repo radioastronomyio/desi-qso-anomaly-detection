@@ -2807,7 +2807,7 @@ def build_redshift_block(z_values: Sequence[float]) -> dict[str, Any]:
         "mean": float(np.mean(finite)) if finite.size else None,
         "std_population_ddof0": float(np.std(finite)) if finite.size else None,
         "quantiles": quantile_profile(finite),
-        "histogram": z_histogram(finite, Z_HISTOGRAM_BIN_WIDTH),
+        "histogram": z_histogram(z, Z_HISTOGRAM_BIN_WIDTH),
         "quantile_method": QUANTILE_METHOD,
         "histogram_definition": (
             f"bin width {Z_HISTOGRAM_BIN_WIDTH} over the populated range, edges rounded outward to the bin grid; "

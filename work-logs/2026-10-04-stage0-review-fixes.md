@@ -74,3 +74,7 @@ Don authorized Action Registry `rec4acLZWCuN1tJk9` at 09:15 EDT after stating at
 ### T1: Record supplied D2 arguments
 
 When `main(argv)` is used, D2 now records the resolved script path followed by that supplied argument vector in `provenance.command`; a normal CLI invocation continues to record `sys.argv`. The dedicated synthetic integration regression supplies paths and numeric parameters while setting unrelated host-process arguments. It failed by recording only `hosting-process --unrelated-host-option`, then passed with the exact supplied vector. Full suite: **152 passed**. No sealed artifact was changed.
+
+### T2: Preserve nonfinite values for histogram accounting
+
+`build_redshift_block` now passes the original redshift sequence to `z_histogram`, while finite values remain the input to moments and quantiles. The dedicated regression supplies two finite and two nonfinite values. It failed with `count_nonfinite=2` beside `histogram.count_nonfinite_excluded=0`, then passed with both counts equal to two and two finite values inside the histogram. Full suite: **153 passed**. No Stage 0 output was regenerated.
