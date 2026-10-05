@@ -1,11 +1,11 @@
 <!--
 ---
-title: "Astra Loader and First Experiment: Boundary Checkpoint"
-description: "Pre-Gate 0 stop because the Stage 0 branch required as the stacked PR base is not published on origin"
+title: "Astra Loader and First Experiment: Gate Worklog"
+description: "Gate 0–2 evidence, resolved publication boundary and three-window baseline results"
 author: "Codex"
 date: "2026-10-04"
 version: "0.1"
-status: "active"
+status: "under-review"
 tags:
   - type: worklog
   - domain: ard-consumer
@@ -17,21 +17,21 @@ related_documents:
 ---
 -->
 
-# Astra Loader and First Experiment: Boundary Checkpoint
+# Astra Loader and First Experiment: Gate Worklog
 
 ## Summary
 
 | Attribute | Value |
 |-----------|-------|
-| Status | Stopped before Gate 0 completion |
+| Status | Gates 0–2 validated; prepared for authorized stacked PR publication |
 | Authorization | User reports Don approved this unit on 2026-10-04 at 21:10 ET: "Approved, execute" |
-| Intended spec | `staging/2026-10-04-astra-loader-experiment/2026-10-04-dqad-spec-01-astra-loader-experiment.md` (not written) |
-| Gates completed | None |
-| Boundary | B-01: required stacked PR base is absent from origin |
+| Intended spec | `staging/2026-10-04-astra-loader-experiment/2026-10-04-dqad-spec-01-astra-loader-experiment.md` |
+| Gates completed | 0 (483aa86), 1 (2500923), 2 (this checkpoint commit) |
+| Boundary | B-01 resolved by explicit authorization; final window decision reserved for Don |
 
 Objective: specify and build an experimental manifest-driven spectral loader, compare two or three candidate redshift bins with a bounded baseline, and publish the working branch and PR for Don's window decision.
 
-Outcome: read-only preflight found that the required Stage 0 base is local only. Execution stopped under the user's boundary rule. No loader, tests, experiment, gate commit, working branch, push, or PR was created.
+Outcome: B-01 initially stopped preflight and was subsequently resolved by the explicit authorization recorded in section 5. The experimental loader and three-window comparison are complete, with 167 passing tests and unchanged source integrity. No window is adopted. Sections 1–4 retain the initial stop record; subsequent sections record resumption and completed gates.
 
 ## 1. Work Completed
 
@@ -105,3 +105,46 @@ Evidence: the new tests initially failed because the two implementation modules 
 The nine-row live smoke check passed over three seeded rows per candidate, with all 7,927 input pixels satisfying the audit contract. Output grids contain 799/530/249 bins for W1/W2/W3; valid-pixel counts were 779–792 / 519–530 / 249. Evidence: `staging/2026-10-04-astra-loader-experiment/gate1-smoke.json`, including exact target IDs, row_uids and rest bounds. All selected source size/mtime pairs and both manifest hashes were unchanged. No rr_chi2 proxy was introduced.
 
 Limitations carried forward: independent-arm diagonal noise assumption, induced covariance between bins sharing native pixels, and observed flux-density amplitudes on transformed wavelength coordinates. Gate 1 does not make a physical-anomaly claim. No new scope boundary was encountered.
+
+
+## 8. Gate 2: Bounded Baseline and Decision Report
+
+Implemented `src/dqad_audit/experiment.py`, `scripts/06_loader_experiment.py` and seven baseline/report tests. Ran exactly the frozen three candidates, seed 20261004, 576 training plus 192 holdout selections per candidate. All 2,304 selections (2,303 unique targets; one reused between W2/W3) passed inclusion. The globally shared tile split has no train/holdout tile or target intersection. No hyperparameter search, adaptive sample increase, GPU use or package installation occurred.
+
+| Candidate | Population | Actual common-grid edges A | Pixels | Median score | Score–SNR rho | Score–mask rho | Score–zero-ivar rho |
+|-----------|-----------:|----------------------------|-------:|-------------:|--------------:|---------------:|-------------------:|
+| W1 [0.5,0.75) | 43,633 | 2400–5596 | 799 | 1.3827 | 0.7597 | -0.1425 | -0.1426 |
+| W2 [1.5,1.75) | 144,523 | 1440–3560 | 530 | 1.354 | 0.851 | -0.114 | -0.110 |
+| W3 [1,2.5) | 733,045 | 1800–2796 | 249 | 1.142 | 0.722 | -0.155 | -0.155 |
+
+Each row above summarizes 192 held-out scores; full precision is preserved in `run-01/*-diagnostics.json` and `*-summary.json`. The weighted residual ranking strongly tracks SNR in every window. This is an intended diagnostic result, not a violation of the loader contract or justification to select a window. Absolute scores are not calibrated for comparing grids or claiming physical anomalies.
+
+Overlap sensitivity: median residual shares 2.75%/2.59%/2.47%, median pixel shares 2.96%/2.93%/3.25%; omitting those residual pixels retains all ten top-ranked objects in each candidate, with score correlations 0.9989/0.9988/0.9939. This is a post-fit sensitivity check, not a refit. Tile checks use only 24/21/21 objects on repeated tiles; descriptive permutation p-values are 0.450/0.646/0.112. Sparse repeated-tile coverage limits any conclusion about tile effects. Redshift/valid-coverage correlations, score deciles and per-tile tables are also saved.
+
+All eighteen top-ranked spectrum panels and three nuisance panels were visually inspected, including full target IDs, reconstructions, propagated diagonal uncertainties, masks and overlap locations. Nuisance axes were made legible as percentages after inspection. No physical classification is asserted. Selected raw zero-ivar fractions reached only 5.89%/3.14%/2.88%; the archive's extreme approximately 36% tail was not empirically exercised by this small sample.
+
+Artifacts: `staging/2026-10-04-astra-loader-experiment/report.md` is the decision brief, with N-01–N-04 findings and W1/W2/W3 closed questions. `run-01/report.md` contains the complete measured report; its README indexes selections, included/excluded rows, arrays, PCA models, reconstructions, scores, nuisance diagnostics, PNG/PDF figures, snapshots and provenance. The run took **127.1 seconds** and produced approximately **25 MB**. The staging root README is the entry point.
+
+Reproducibility: all three saved-array replays matched inclusion, numerical scores (rtol 1e-10, atol 1e-12) and rank order. Exact input hashes, source-code hashes, seed, software versions and source commit at run time are in `run-01/provenance.json`. Numerical modules still match those recorded hashes. The renderer was subsequently repaired for insufficient correlations and half-open interval labels; the exact executed runner is retained as `06_loader_experiment.executed.py`, and display-only changes are recorded in `run-01/report-render-provenance.json`. No numeric experiment was rerun or tuned.
+
+Integrity: all **10,793** manifest corpus-file size/mtime pairs matched the original Stage 0 snapshot and the before/after experiment snapshots; mismatch count zero. Both manifest Parquets and manifest_provenance.json have unchanged SHA-256 hashes. These corpus checks attest size/mtime, not byte-level content hashes. Corpus/manifests were never opened for writing.
+
+Split limitations beyond target duplication are explicit in both reports: shared sky/calibration/exposure/camera/observing conditions, upstream QSO/ZWARN selection, redshift uncertainty and coverage, normalization and heteroskedastic noise, correlated rebinned pixels and omission of a resolution model, sparse tail evidence, and cross-candidate reuse. Choosing or tuning on these results consumes the holdout as a development set; later final evaluation needs a fresh design.
+
+## 9. Final Review and Verification
+
+A fresh reviewer inspected the whole change against Stage 0 and the frozen spec, including untracked Gate 2 code. It found no Critical/Important numerical implementation issue. It ran 33 focused tests and independently matched 100 randomized irregular-grid resampling cases to a scalar calculation. The review raised two lower-priority follow-ups.
+
+**Final ruling:** promoted the report's inability to render a missing overlap correlation to an implementation issue because the spec requires explicit insufficient-data outcomes. A new test reproduced the TypeError, then passed after the display fix. This changes no fitted model or numeric result; the cost of the ruling is limited to a more robust renderer. That test also preserves target IDs above float64's exact integer range.
+
+**Deferred minor:** add a multi-row-group temporary Parquet fixture to explicitly test row-group boundary offsets. Existing fixtures, nine-row smoke checks and the full experiment verify identity and nonzero offsets; the reviewer found the row-group implementation correct. This is additional regression coverage, not an unresolved measured defect.
+
+Reviewer topics set aside were handled as follows: live plots and artifacts were reviewed by the root agent; physical interpretation and final window adoption remain Don's; no claim of production readiness beyond the bounded experimental contract is made. These scope decisions avoid scientific claims unsupported by this sample.
+
+Final verification: **167 tests passed in 1.71s** (34 new); focused Ruff and Black checks pass for all seven new code/test files; `git diff --check` is clean. Frozen spec SHA-256, numerical source hashes and all report/index local links were verified. Gate 2 includes only code, tests and this worklog. All spec/plan/experiment artifacts remain gitignored. No new stop boundary arose after B-01 resolution.
+
+## 10. Closeout Handoff
+
+Gate 0 commit: `483aa86`; Gate 1 commit: `2500923`; this Gate 2 checkpoint receives its commit before the authorized ordinary branch push. The loader PR targets `spec/2026-08-15-dqad-01-spectral-manifest`, explicitly stacked on [Stage 0 PR #1](https://github.com/radioastronomyio/desi-qso-anomaly-detection/pull/1). Publication URLs and final head verification are recorded in the staging README and chat after PR creation; no extra gate or history rewrite is needed to put a commit's own SHA inside itself.
+
+Stage 0 remains exactly `dc14bed6044e02bf99a70bf6cc4fda547ab167b6`. Neither PR may be merged by the agent. Working branch and local artifacts remain for review. The intended unit ends with Don's window decision, and no downstream VAE training is dispatched here.
