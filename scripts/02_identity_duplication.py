@@ -221,6 +221,18 @@ def main(argv: list[str] | None = None) -> None:
     args = parse_args(argv)
     start = time.perf_counter()
     tile_ids, target_ids, total_rows = load_target_ids(args.work_dir)
+    inventory_summary = inventory_cross_check(args.work_dir, total_rows)
+    if inventory_summary["present"]:
+        if inventory_summary["open_failures"]:
+            raise SystemExit(
+                f"D1 inventory reports {inventory_summary['open_failures']} open failures; "
+                "refusing to publish identity_summary.json"
+            )
+        if inventory_summary["rows_agree"] is False:
+            raise SystemExit(
+                f"D1 inventory row count {inventory_summary['total_actual_rows']} does not match "
+                f"target_ids row count {total_rows}; refusing to publish identity_summary.json"
+            )
     distribution = repeat_distribution(target_ids)
     unique_target_ids = sum(distribution.values())
     duplicated_ids = sum(n for k, n in distribution.items() if k >= 2)
@@ -264,7 +276,7 @@ def main(argv: list[str] | None = None) -> None:
                 "path": str(args.work_dir / TARGET_IDS_FILENAME),
                 "rows": total_rows,
             },
-            "inventory_summary": inventory_cross_check(args.work_dir, total_rows),
+            "inventory_summary": inventory_summary,
             "converter_source": {
                 "path": str(args.converter_source),
                 "selection_filter_line": int(converter_filter["selection_filter"]["line"]),

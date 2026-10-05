@@ -434,3 +434,45 @@ def test_identity_main_records_supplied_arguments_in_provenance(tmp_path, conver
     module.main(supplied)
     summary = json.loads((work_dir / "identity_summary.json").read_text())
     assert summary["provenance"]["command"] == shlex.join([str(path), *supplied])
+
+
+@pytest.mark.parametrize(
+    ("open_failures", "inventory_rows", "expected_error"),
+    [
+        (1, 7, "open failures"),
+        (0, 8, "row count"),
+    ],
+)
+def test_identity_main_rejects_incomplete_inventory_before_publication(
+    tmp_path, converter_source, open_failures, inventory_rows, expected_error
+):
+    import importlib.util
+    from pathlib import Path
+
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+
+    path = Path(__file__).resolve().parents[1] / "scripts" / "02_identity_duplication.py"
+    spec = importlib.util.spec_from_file_location("identity_inventory_gate_script", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    work_dir = tmp_path / "work"
+    work_dir.mkdir()
+    pq.write_table(
+        pa.table({"tile_id": TILES, "row_idx": [0, 1, 2, 0, 1, 0, 1], "target_id": TIDS}),
+        work_dir / "target_ids.parquet",
+    )
+    (work_dir / "inventory_summary.json").write_text(
+        json.dumps(
+            {
+                "total_files_scanned": 1,
+                "open_failures": {"count": open_failures},
+                "total_actual_rows": inventory_rows,
+            }
+        )
+    )
+
+    with pytest.raises(SystemExit, match=expected_error):
+        module.main(["--work-dir", str(work_dir), "--converter-source", str(converter_source)])
+
+    assert not (work_dir / "identity_summary.json").exists()
