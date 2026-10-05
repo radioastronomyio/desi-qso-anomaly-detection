@@ -148,3 +148,26 @@ Final verification: **167 tests passed in 1.71s** (34 new); focused Ruff and Bla
 Gate 0 commit: `483aa86`; Gate 1 commit: `2500923`; this Gate 2 checkpoint receives its commit before the authorized ordinary branch push. The loader PR targets `spec/2026-08-15-dqad-01-spectral-manifest`, explicitly stacked on [Stage 0 PR #1](https://github.com/radioastronomyio/desi-qso-anomaly-detection/pull/1). Publication URLs and final head verification are recorded in the staging README and chat after PR creation; no extra gate or history rewrite is needed to put a commit's own SHA inside itself.
 
 Stage 0 remains exactly `dc14bed6044e02bf99a70bf6cc4fda547ab167b6`. Neither PR may be merged by the agent. Working branch and local artifacts remain for review. The intended unit ends with Don's window decision, and no downstream VAE training is dispatched here.
+
+## 11. Authorized PR #2 Review Fix Round
+
+The user authorized R1–R6 from `staging/2026-10-04-astra-loader-experiment/claude-review-pr2.md`, with one new commit per review ID, ordinary pushes to PR #2's existing branch, attribution trailers on every new commit, and no rebase/amend/force-push/merge. Scope now explicitly includes dependency declarations and their clean-install validation. Run-01 must remain the recorded decision evidence and must not be rerun; its W2 selection is the next unit's reference sample. Corpus and manifests remain read-only.
+
+Builder attribution for this unit and fix round: **GPT, Astra, GPT Work DESI project, spec `2026-10-04-dqad-spec-01`**. New commits use the existing repository co-author identity `astronomy-coding-bot <astronomy-coding-bot@radioastronomy.site>`, with `Model: GPT (Astra; GPT Work DESI project)` and `Spec: 2026-10-04-dqad-spec-01`. The original three gate commits are preserved unchanged.
+
+Starting head: `85bb36494dfcacb93c932dd727fcbb406e549a5f`; local and fetched remote heads agree. The fix-round evidence directory is `staging/2026-10-04-astra-loader-experiment/review-fixes/`. Its `run-01-before.json` records SHA-256, byte count and mtime for all 46 run-01 files before any fixes. No data experiment will be invoked during this round.
+
+### R1: Runtime dependencies and clean installation
+
+Declared SciPy (`>=1.12`) and Matplotlib (`>=3.8`) as runtime dependencies in `pyproject.toml`, so the ordinary install includes experiment and report imports. A fresh wheel build also exposed the pre-existing invalid `project.authors[0].url` field; the author name is preserved and its URL moved to the valid `[project.urls]` table. This metadata repair is necessary to satisfy R1's clean-install requirement and changes no scientific behavior.
+
+Verified install path from the repository root:
+
+```bash
+python -m venv /tmp/dqad-pr2-clean-env
+/tmp/dqad-pr2-clean-env/bin/python -m pip install '.[dev]'
+MPLCONFIGDIR=/tmp/dqad-pr2-matplotlib OPENBLAS_NUM_THREADS=2 \
+  /tmp/dqad-pr2-clean-env/bin/python -m pytest
+```
+
+The concrete validation used newly created `/tmp/dqad-pr2-review-venv.l0PnUN`, without system/shared site packages. `pip install '.[dev]'` built and installed the package successfully; **167 tests passed in 2.10s**; `pip check` reported no broken requirements. An isolated (`python -I`) import resolved `dqad_audit.experiment` from that environment's installed package, with SciPy 1.18.1 and Matplotlib 3.11.2, and no shared-venv path. Full resolved versions and install/test logs are preserved under `review-fixes/R1-*`. The initial metadata failure is retained in `R1-install.log`; its successful correction is in `R1-install-retry.log`. Run-01 was not rerun or changed.

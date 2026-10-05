@@ -8,9 +8,12 @@ version = "0.1.0"
 description = "Read-only audit tooling for the DESI DR1 QSO spectral Parquet corpus"
 readme = "README.md"
 requires-python = ">=3.12"
-authors = [{ name = "VintageDon", url = "https://github.com/vintagedon/" }]
+authors = [{ name = "VintageDon" }]
 license = { text = "MIT" }
-dependencies = ["pyarrow>=15.0", "numpy>=1.26", "pandas>=2.2"]
+dependencies = ["pyarrow>=15.0", "numpy>=1.26", "pandas>=2.2", "scipy>=1.12", "matplotlib>=3.8"]
+
+[project.urls]
+Author = "https://github.com/vintagedon/"
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0", "ruff>=0.4", "black>=24.0"]
