@@ -54,6 +54,24 @@ python scripts/04_scalars_nuisance.py [--corpus-root PATH] [--work-dir PATH] [--
 python scripts/05_build_manifest.py [--corpus-root PATH] [--work-dir PATH] [--output-dir PATH] [--seed N] [--spot-rows N]
 ```
 
+### D2 external converter-source prerequisite
+
+D2 needs a frozen copy of the upstream converter source, in addition to this repository and the D1 work products. Installing `dqad-audit` or copying the corpus does not supply this file. The ML01 default is:
+
+```text
+/opt/agents/repos/desi-cosmic-void-galaxies/work-logs/03-spectral-tile-pipeline/02-extract-qso-tile-to-parquet.py
+```
+
+On another machine, supply the corresponding source snapshot from `desi-cosmic-void-galaxies` explicitly:
+
+```bash
+python scripts/02_identity_duplication.py \
+  --work-dir /path/to/audit-work \
+  --converter-source /path/to/frozen/02-extract-qso-tile-to-parquet.py
+```
+
+The source is read as text; D2 does not execute the converter or modify it. It must retain the original selection expression (`SPECTYPE == "QSO"` and `ZWARN == 0`), wavelength limits/mask and arm-concatenation lines expected by `converter_filter_block`. D2 records the supplied path, verbatim expressions and source line numbers in `identity_summary.json`. A missing, unreadable or incompatible file raises `ValueError` before a new summary is written; D6 requires that summary. Keep the matching upstream source snapshot with the audit's provenance. Quoting its filter does not measure the excluded reference population; see the [dated gap-attribution erratum](../docs/2026-10-04-stage0-gap-attribution-erratum.md).
+
 Interrupted runs resume from per-chunk part files under `<work-dir>/parts/`. D3 and D4 reuse a part only when the D1 inventory supplies its complete expected row count and the stored count matches. Without those counts (including when `inventory.parquet` is absent), they rescan the chunk; failed chunks are not checkpointed and read failures abort before final output publication. A run-config manifest (corpus root, chunk size, file-list fingerprint) fences the parts directory: checkpoints from a different configuration are pruned before scanning, and assembly reads only part names defined by the current chunk plan. The array audit keeps its own fence at `<work-dir>/parts/array_audit/run_config.json` keyed on the sampling parameters (seed, stride, rows per tile) as well as the corpus identity. The scalars pass keeps its own fence at `<work-dir>/parts/scalars/run_config.json` keyed on the corpus identity, chunk size, column set, and the snr/mask definitions version; it validates every chunk's expected row count against the D1 inventory and requires every corpus row to be present (open failures abort the run). The identity analysis reads only the D1 outputs in `<work-dir>/` and quotes the converter selection filter verbatim from the frozen converter source (read-only). The manifest builder reads only the D1-D5 outputs in `<work-dir>/` plus stat calls on the corpus; it verifies the corpus is untouched (size and mtime identical to the pre-audit snapshot) before writing anything, hard-asserts the object table row count and sampled-join coverage against the D2 and D3 totals, round-trip validates both tables with pyarrow (seeded spot checks), and emits the artifacts plus `manifest_provenance.json` into `<output-dir>` (default: the directory containing `<work-dir>`). The corpus is never modified by any stage.
 
 ---

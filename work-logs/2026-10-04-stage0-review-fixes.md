@@ -56,3 +56,13 @@ Forwarded `argv` to `parse_args`. A real synthetic D2 invocation now uses the re
 ## S6: Align the advertised Python minimum
 
 Updated the root README's Python badge from 3.11+ to 3.12+, matching `pyproject.toml`'s `requires-python = ">=3.12"`. Verified the README has no remaining 3.11 requirement. This documentation-only change requires no additional numerical test.
+
+## S7: Document the external converter source
+
+The scripts README now identifies the default absolute path in the separate `desi-cosmic-void-galaxies` checkout, explains that neither this package nor the corpus supplies it, and shows an explicit `--converter-source` invocation for another host. It describes read-only text extraction, the required filter/arm/wavelength expressions, recorded source provenance, and failure before summary publication when the file is unavailable or incompatible. The CLI help confirms the documented flag. The S5 integration test also exercises a supplied external source file.
+
+## Final verification and PR #2 compatibility
+
+Final Stage 0 checks: **151 tests passed**, repository-wide Ruff passed, Black passed (16 Python files), and whitespace validation passed. An isolated archive of PR #2 at `6a924642c6d800ec0e60144c3eea8f9a6528ccab` accepted the complete Stage 0 change patch without conflicts. Its combined suite passed **198 tests**, Ruff and Black (24 Python files). Neither branch was merged or rebased for this check. The temporary combined source snapshot and logs are indexed under `stage0-review-fixes/`; no code change on PR #2 is required by these fixes, and its branch head remains unchanged.
+
+The sealed August report and all three external manifest artifacts match their pre-edit SHA-256, byte count and mtime exactly. Stage 0 was not rerun, manifests were not regenerated, and corpus/manifests remained read-only. All executable regression inputs were synthetic temporary fixtures. S1–S7 each receive one new attributed commit. The authorized closeout is an ordinary push to PR #1's existing branch, leaving both PRs open and unmerged; final published heads and links are recorded in the staging index after the push.
