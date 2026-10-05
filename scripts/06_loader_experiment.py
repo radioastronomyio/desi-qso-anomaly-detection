@@ -42,7 +42,7 @@ from matplotlib.ticker import MaxNLocator, PercentFormatter
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO / "src"))
 
-from dqad_audit import compare_corpus_snapshots, snapshot_records
+from dqad_audit import SNAPSHOT_SCHEMA, compare_corpus_snapshots, snapshot_records
 from dqad_audit.experiment import (
     CANDIDATES,
     SAMPLING_VERSION,
@@ -75,8 +75,39 @@ def write_json(path: Path, payload: dict) -> None:
     path.write_text(json.dumps(payload, indent=2, allow_nan=False) + "\n")
 
 
-def source_state(reader: ManifestLoader) -> pa.Table:
-    return pa.Table.from_pylist(snapshot_records([Path(p) for p in reader.files.path]))
+def source_state(reader: ManifestLoader, integrity_path: Path, *, phase: str) -> pa.Table:
+    """Snapshot readable sources and persist all stat failures before raising."""
+    records, errors = [], []
+    first_error = None
+    for name in reader.files.path:
+        path = Path(name)
+        try:
+            records.extend(snapshot_records([path]))
+        except OSError as error:
+            if first_error is None:
+                first_error = error
+            errors.append(
+                {
+                    "path": str(path),
+                    "error_type": type(error).__name__,
+                    "errno": error.errno,
+                    "message": str(error),
+                }
+            )
+    if first_error is not None:
+        write_json(
+            integrity_path,
+            {
+                "phase": phase,
+                "unchanged": False,
+                "files_requested": len(reader.files),
+                "files_statted": len(records),
+                "missing_files": [item["path"] for item in errors if item["error_type"] == "FileNotFoundError"],
+                "stat_errors": errors,
+            },
+        )
+        raise first_error
+    return pa.Table.from_pylist(records, schema=SNAPSHOT_SCHEMA)
 
 
 def run_candidate(key: str, selection: pd.DataFrame, reader: ManifestLoader, out: Path) -> dict:
@@ -462,7 +493,7 @@ def main() -> None:
     reader = ManifestLoader(MANIFESTS, CORPUS)
     if (len(reader.files), len(reader.objects)) != (10793, 1030934):
         raise ValueError("manifest totals differ from Stage 0")
-    before = source_state(reader)
+    before = source_state(reader, out / "integrity.json", phase="before")
     pq.write_table(before, out / "corpus-before.parquet")
     historical = compare_corpus_snapshots(pq.read_table(MANIFESTS / "work/corpus_snapshot.parquet"), before)
     if not historical["unchanged"]:
@@ -477,7 +508,7 @@ def main() -> None:
         for a, b in [("W1", "W2"), ("W1", "W3"), ("W2", "W3")]
     }
     summaries = {key: run_candidate(key, frame, reader, out) for key, frame in selected.items()}
-    after = source_state(reader)
+    after = source_state(reader, out / "integrity.json", phase="after")
     pq.write_table(after, out / "corpus-after.parquet")
     current = compare_corpus_snapshots(before, after)
     after_hashes = {p.name: digest(p) for p in manifest_paths}

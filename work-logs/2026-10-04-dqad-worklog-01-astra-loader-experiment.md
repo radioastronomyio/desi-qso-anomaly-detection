@@ -191,3 +191,9 @@ Before the fix, regressions demonstrated that omitting W1 or moving W2 to the en
 Updated PR #2's body with explicit builder attribution: **GPT, Astra, GPT Work DESI project, spec `2026-10-04-dqad-spec-01`**. Read the published body back and verified that exact attribution. Existing reviewer-generated body content was preserved. This attribution applies to the original loader unit as well as this fix round; the original gate commits remain unchanged.
 
 Every new fix commit, beginning with R1, carries the established `Co-authored-by: astronomy-coding-bot <astronomy-coding-bot@radioastronomy.site>` identity, `Model: GPT (Astra; GPT Work DESI project)`, and `Spec: 2026-10-04-dqad-spec-01`. R1/R2/R3 commits are `d83404d`, `b978d57` and `1118eae`; this R4 checkpoint and the remaining fixes use the same trailer block. This documentation-only item requires no new numerical test. No rebase, amendment or history rewrite was performed.
+
+### R5: Persist corpus stat failures before raising
+
+`source_state` now attempts every manifest-listed path, collects `OSError` details, and writes `integrity.json` before re-raising the first original error. Failure records identify the before/after phase, requested and successfully statted file counts, missing-file names, and every failed path with its error type, errno and message. Both snapshot call sites pass the output record path explicitly. Successful snapshots retain the existing schema and do not emit a false failure record.
+
+Regression tests use actual temporary files plus a narrowly simulated permission failure; they verify that missing and unstattable paths are both named before an exception reaches the caller, for both phases. The new tests failed before implementation and now pass. Full suite: **176 passed in 1.87s**; focused Ruff/Black pass. No real corpus file was changed, hidden or chmodded to test this behavior.
