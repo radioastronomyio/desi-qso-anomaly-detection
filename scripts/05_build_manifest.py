@@ -61,6 +61,7 @@ import sys
 import time
 from datetime import datetime
 from pathlib import Path
+from tempfile import mkdtemp
 
 import numpy as np
 import pandas as pd
@@ -271,6 +272,36 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
+def publish_validated_set(staged: list[Path], output_dir: Path) -> None:
+    """Publish a prevalidated set, restoring prior files on a catchable failure.
+
+    Same-filesystem hard links retain the old generation in the private build
+    directory. No published file changes until every backup is available.
+    This is a single-writer operation; independent paths are not a filesystem
+    transaction against power loss or SIGKILL. Retained builds aid recovery.
+    """
+    backups: dict[Path, Path] = {}
+    for source in staged:
+        destination = output_dir / source.name
+        if destination.exists():
+            backup = source.parent / f"previous-{source.name}"
+            backup.hardlink_to(destination)
+            backups[destination] = backup
+    published: list[tuple[Path, Path]] = []
+    try:
+        for source in staged:
+            destination = output_dir / source.name
+            source.replace(destination)
+            published.append((source, destination))
+    except BaseException:
+        for source, destination in reversed(published):
+            if destination in backups:
+                backups[destination].replace(destination)
+            else:
+                destination.replace(source)
+        raise
+
+
 def main(argv: list[str] | None = None) -> None:
     """
     Run the D6 assembly: integrity gate, both manifests, round-trip, provenance.
@@ -318,28 +349,23 @@ def main(argv: list[str] | None = None) -> None:
     provenance_path = args.output_dir / MANIFEST_PROVENANCE_FILENAME
 
     file_manifest = inventory.select(INVENTORY_SCHEMA.names).cast(INVENTORY_SCHEMA)
-    write_part(file_manifest, file_manifest_path)
-    logger.info("wrote file manifest: %d rows -> %s", file_manifest.num_rows, file_manifest_path)
-
     object_manifest = join_sampled_flags(per_object, array_audit)
     object_validation = validate_object_manifest(
         object_manifest,
         expected_rows=expected_rows,
         expected_sampled_join=expected_sampled,
     )
-    write_part(object_manifest, object_manifest_path)
-    logger.info(
-        "wrote object manifest: %d rows (sampled flags on %d) -> %s",
-        object_manifest.num_rows,
-        object_validation["sampled_join_coverage"],
-        object_manifest_path,
-    )
+    build_dir = Path(mkdtemp(prefix=".manifest-build-", dir=args.output_dir))
+    staged_file = build_dir / FILE_MANIFEST_FILENAME
+    staged_object = build_dir / OBJECT_MANIFEST_FILENAME
+    staged_provenance = build_dir / MANIFEST_PROVENANCE_FILENAME
+    logger.info("staging manifest validation in %s", build_dir)
+    write_part(file_manifest, staged_file)
+    write_part(object_manifest, staged_object)
 
     round_trip = {
-        "file_manifest": round_trip_validate(file_manifest_path, file_manifest, seed=args.seed, n_spot=args.spot_rows),
-        "object_manifest": round_trip_validate(
-            object_manifest_path, object_manifest, seed=args.seed, n_spot=args.spot_rows
-        ),
+        "file_manifest": round_trip_validate(staged_file, file_manifest, seed=args.seed, n_spot=args.spot_rows),
+        "object_manifest": round_trip_validate(staged_object, object_manifest, seed=args.seed, n_spot=args.spot_rows),
     }
     logger.info(
         "round-trip validation passed for both tables (seed %d, %d spot rows each)",
@@ -347,6 +373,8 @@ def main(argv: list[str] | None = None) -> None:
         args.spot_rows,
     )
 
+    round_trip["file_manifest"]["path"] = str(file_manifest_path)
+    round_trip["object_manifest"]["path"] = str(object_manifest_path)
     files = discover_corpus_files(args.corpus_root)
     provenance = build_manifest_provenance(
         generated_at=datetime.now().astimezone().isoformat(timespec="seconds"),
@@ -385,14 +413,14 @@ def main(argv: list[str] | None = None) -> None:
             "file_manifest": {
                 "path": str(file_manifest_path),
                 "rows": int(file_manifest.num_rows),
-                "size_bytes": int(file_manifest_path.stat().st_size),
-                "md5": file_md5(file_manifest_path),
+                "size_bytes": int(staged_file.stat().st_size),
+                "md5": file_md5(staged_file),
             },
             "object_manifest": {
                 "path": str(object_manifest_path),
                 "rows": int(object_manifest.num_rows),
-                "size_bytes": int(object_manifest_path.stat().st_size),
-                "md5": file_md5(object_manifest_path),
+                "size_bytes": int(staged_object.stat().st_size),
+                "md5": file_md5(staged_object),
             },
         },
         round_trip=round_trip,
@@ -410,7 +438,10 @@ def main(argv: list[str] | None = None) -> None:
         },
     )
     provenance["timing_seconds"] = {"total": round(time.perf_counter() - total_start, 3)}
-    provenance_path.write_text(json.dumps(provenance, indent=2) + "\n", encoding="utf-8")
+    staged_provenance.write_text(json.dumps(provenance, indent=2) + "\n", encoding="utf-8")
+    if load_json(staged_provenance) != provenance:
+        raise RuntimeError("provenance JSON failed round-trip validation")
+    publish_validated_set([staged_file, staged_object, staged_provenance], args.output_dir)
     logger.info("wrote provenance -> %s", provenance_path)
     logger.info(
         "headline: file_manifest=%d rows, object_manifest=%d rows, sampled_join=%d, corpus_integrity=%d/%d unchanged",

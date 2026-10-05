@@ -527,3 +527,59 @@ def test_script_aborts_when_work_inputs_disagree(script, tmp_path):
         script.main(
             ["--corpus-root", str(corpus_root), "--work-dir", str(work_dir), "--output-dir", str(tmp_path / "out")]
         )
+
+
+@pytest.mark.parametrize("existing", [False, True])
+@pytest.mark.parametrize("failure", ["duplicate", "coverage", "round_trip", "provenance", "publication"])
+def test_failed_build_preserves_entire_published_set(script, tmp_path, monkeypatch, existing, failure):
+    corpus_root = tmp_path / "corpus"
+    work_dir = tmp_path / "work"
+    output_dir = tmp_path / "out"
+    build_synthetic_work(corpus_root, work_dir)
+    output_dir.mkdir()
+    names = ["qso_file_manifest_v1.parquet", "qso_object_manifest_v1.parquet", "manifest_provenance.json"]
+    if existing:
+        for name in names:
+            (output_dir / name).write_bytes(f"previous verified generation: {name}".encode())
+    before = (
+        {name: ((output_dir / name).read_bytes(), (output_dir / name).stat().st_mtime_ns) for name in names}
+        if existing
+        else {}
+    )
+    if failure == "duplicate":
+        path = work_dir / "per_object_raw.parquet"
+        table = pq.read_table(path)
+        write_part(pa.concat_tables([table.slice(0, 6), table.slice(0, 1)]), path)
+        expected_error = (ValueError, "duplicate")
+    elif failure == "coverage":
+        write_part(make_sampled([("10000:1", {}), ("99999:0", {})]), work_dir / "array_audit.parquet")
+        expected_error = (RuntimeError, "coverage")
+    elif failure == "round_trip":
+        real_write = script.write_part
+
+        def corrupt_object_file(table, path):
+            real_write(table.slice(0, 1) if Path(path).name == names[1] else table, path)
+
+        monkeypatch.setattr(script, "write_part", corrupt_object_file)
+        expected_error = (RuntimeError, "round-trip row mismatch")
+    elif failure == "provenance":
+        (work_dir / "target_ids.parquet").rename(work_dir / "target_ids.unavailable")
+        expected_error = (FileNotFoundError, "target_ids.parquet")
+    else:
+        real_replace = Path.replace
+
+        def fail_second_publication(path, target):
+            if Path(target) == output_dir / names[1] and path.name == names[1]:
+                raise OSError("simulated publication failure")
+            return real_replace(path, target)
+
+        monkeypatch.setattr(Path, "replace", fail_second_publication)
+        expected_error = (OSError, "simulated publication failure")
+    with pytest.raises(expected_error[0], match=expected_error[1]):
+        script.main(["--corpus-root", str(corpus_root), "--work-dir", str(work_dir), "--output-dir", str(output_dir)])
+    after = {
+        name: ((output_dir / name).read_bytes(), (output_dir / name).stat().st_mtime_ns)
+        for name in names
+        if (output_dir / name).exists()
+    }
+    assert after == before
