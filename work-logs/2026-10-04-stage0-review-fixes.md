@@ -92,3 +92,7 @@ Don authorized this final PR #1 fix round under Action Registry `rec4acLZWCuN1tJ
 ### U1: Reject an incomplete D1 inventory before D2 publication
 
 When a present `inventory_summary.json` reports any open failure or its total row count disagrees with `target_ids.parquet`, D2 now exits before publishing `identity_summary.json`. Two synthetic regressions cover the independent failure states. Both failed by completing publication before the fix and now pass without creating a summary. Full Stage 0 suite: **156 passed**; focused Ruff passed and Black formatting passed after applying the formatter. No corpus or sealed artifact was read or regenerated.
+
+### U2: Make D4 warning provenance independent of resume history
+
+D4 now recomputes per-file null-SNR, nonfinite-redshift and nonpositive-redshift warning records from the complete assembled checkpoint table, attaching the source paths from the deterministic task list. Warning provenance therefore describes all assembled data regardless of whether each chunk was scanned or reused in the current invocation. The synthetic resume regression first produced a warning-bearing checkpoint, then reused it; before the fix the second summary replaced all three warning classes with zero, and afterward both summaries carry the same file counts and examples. Full Stage 0 suite: **157 passed**; focused Ruff passed and Black formatting passed after applying the formatter. No corpus or sealed artifact was read or regenerated.

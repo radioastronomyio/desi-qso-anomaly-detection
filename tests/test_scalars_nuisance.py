@@ -585,3 +585,32 @@ def test_scalar_read_failure_does_not_checkpoint_partial_rows(tmp_path, script):
     assert not list((work_dir / "parts" / SCALARS_PART_KIND).glob("*.parquet"))
     assert not (work_dir / PER_OBJECT_FILENAME).exists()
     assert not (work_dir / REDSHIFT_SUMMARY_FILENAME).exists()
+
+
+def test_resumed_run_recomputes_warning_provenance_from_reused_chunk(tmp_path, script):
+    corpus = tmp_path / "corpus"
+    work_dir = tmp_path / "work"
+    path = write_qso_table(
+        corpus / "tile_10000/qso_data_TILE10000_3_qsos.parquet",
+        make_scalars_table(hand_rows()),
+    )
+    write_inventory(work_dir, corpus, [path])
+
+    run_script(script, corpus, work_dir)
+    first = json.loads((work_dir / REDSHIFT_SUMMARY_FILENAME).read_text(encoding="utf-8"))
+    run_script(script, corpus, work_dir)
+    resumed = json.loads((work_dir / REDSHIFT_SUMMARY_FILENAME).read_text(encoding="utf-8"))
+
+    expected = {
+        "files_with_null_snr_rows": 1,
+        "files_with_nonfinite_z_rows": 1,
+        "files_with_z_le_zero_rows": 1,
+        "example_files_capped_at": script.WARNING_FILE_LIST_LIMIT,
+        "examples": {
+            "null_snr": [str(path)],
+            "nonfinite_z": [str(path)],
+            "z_le_zero": [str(path)],
+        },
+    }
+    assert first["provenance"]["warnings"] == expected
+    assert resumed["provenance"]["warnings"] == expected

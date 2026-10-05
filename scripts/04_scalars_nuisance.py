@@ -449,6 +449,54 @@ def validate_assembly(
     )
 
 
+def warnings_from_assembled_table(
+    table: pa.Table,
+    tasks: list[dict[str, object]],
+) -> list[dict[str, object]]:
+    """
+    Recompute per-file warning records from the complete assembled table.
+
+    This makes warning provenance independent of which chunks were scanned
+    during the current invocation. Reused checkpoints contribute exactly the
+    same warning classes as newly scanned chunks.
+
+    Parameters
+    ----------
+    table : pa.Table
+        Complete assembled scalar part table.
+    tasks : list[dict[str, object]]
+        One source-file task per tile, providing paths for warning examples.
+
+    Returns
+    -------
+    list[dict[str, object]]
+        Per-file warning records for files with at least one warning.
+    """
+    counts: dict[str, dict[str, int]] = {
+        str(task["tile_id"]): {"null_snr_rows": 0, "nonfinite_z_rows": 0, "z_le_zero_rows": 0} for task in tasks
+    }
+    for tile_id, snr, z in zip(
+        table.column("tile_id").to_pylist(),
+        table.column("snr_proxy").to_pylist(),
+        table.column("z").to_pylist(),
+    ):
+        warning = counts[str(tile_id)]
+        if snr is None:
+            warning["null_snr_rows"] += 1
+        z_float = float(z)
+        if not np.isfinite(z_float):
+            warning["nonfinite_z_rows"] += 1
+        elif z_float <= 0.0:
+            warning["z_le_zero_rows"] += 1
+
+    warnings: list[dict[str, object]] = []
+    for task in tasks:
+        warning = counts[str(task["tile_id"])]
+        if any(warning.values()):
+            warnings.append({"path": str(task["path"]), "tile_id": str(task["tile_id"]), **warning})
+    return warnings
+
+
 def warning_summary(warnings: list[dict[str, object]]) -> dict[str, object]:
     """
     Summarize per-file warnings for the provenance block.
@@ -538,7 +586,7 @@ def main(argv: list[str] | None = None) -> None:
     tasks = build_tasks(files)
     chunks = plan_chunks(tasks, args.chunk_size)
     expected_rows = expected_part_rows(chunks, inventory_counts)
-    _, errors, warnings, scan_seconds = run_scan(chunks, args.work_dir, args.workers, expected_rows)
+    _, errors, _, scan_seconds = run_scan(chunks, args.work_dir, args.workers, expected_rows)
     if errors:
         for error in errors:
             logger.error("unresolvable open failure: %s (%s)", error["path"], error["error"])
@@ -546,6 +594,7 @@ def main(argv: list[str] | None = None) -> None:
     assembly_start = time.perf_counter()
     parts_table = assemble_table(args.work_dir, chunks)
     validate_assembly(parts_table, expected_total_rows)
+    warnings = warnings_from_assembled_table(parts_table, tasks)
     final_table = project_per_object_table(parts_table)
     final_path = args.work_dir / PER_OBJECT_FILENAME
     write_part(final_table, final_path)
