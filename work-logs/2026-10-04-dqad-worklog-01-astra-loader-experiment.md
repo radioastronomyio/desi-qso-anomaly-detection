@@ -197,3 +197,16 @@ Every new fix commit, beginning with R1, carries the established `Co-authored-by
 `source_state` now attempts every manifest-listed path, collects `OSError` details, and writes `integrity.json` before re-raising the first original error. Failure records identify the before/after phase, requested and successfully statted file counts, missing-file names, and every failed path with its error type, errno and message. Both snapshot call sites pass the output record path explicitly. Successful snapshots retain the existing schema and do not emit a false failure record.
 
 Regression tests use actual temporary files plus a narrowly simulated permission failure; they verify that missing and unstattable paths are both named before an exception reaches the caller, for both phases. The new tests failed before implementation and now pass. Full suite: **176 passed in 1.87s**; focused Ruff/Black pass. No real corpus file was changed, hidden or chmodded to test this behavior.
+
+
+### R6: Render the available scored examples
+
+`plot_examples` now selects up to six finite scores and creates exactly the required number of spectrum panels. A single spectrum uses the same array-shaped axes interface; zero finite scores produces an explicit “No finite scored spectra available” figure. Titles state the actual count, and nonfinite scores cannot displace valid ranked examples.
+
+Four rendering regressions cover zero, one, three and eight finite scores, each alongside NaN/infinite entries. They verify panel counts, exact large target IDs, plotted flux, readable PNG output and PDF output. All four failed before the change and pass afterward. A generated one-spectrum figure was visually inspected for readable layout. This is tested only with synthetic spectra; run-01 plots and rankings remain untouched.
+
+### Fix-round final verification and handoff
+
+The complete suite now has **180 passing tests** in both the shared environment and the clean environment from R1. The final source was rebuilt and installed with `pip install '.[dev]'` in that isolated environment; its full suite exited successfully, `pip check` found no broken requirements, and repository-wide Ruff and Black checks passed (24 Python files). Final clean-install/test logs are in `review-fixes/final-clean-install.log` and `review-fixes/final-clean-tests.log`.
+
+All **46 run-01 files** still match their pre-fix SHA-256, byte count and mtime exactly; `review-fixes/preservation-check.json` records that verification and the pinned W2 reference hash. No experiment was rerun. Corpus and manifests remained read-only. R1–R6 each receive one prospective commit with the required trailers; no original gate commit was rewritten. The authorized closeout is an ordinary push of these six commits to PR #2's existing branch, with its stacked base preserved and neither PR merged. Published commit IDs and PR readback belong in the staging README after the push.

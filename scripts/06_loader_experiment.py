@@ -252,9 +252,14 @@ def plot_examples(
     reconstruction: np.ndarray,
     out: Path,
 ) -> None:
-    chosen = frame.nlargest(6, "score").index
-    fig, axes = plt.subplots(6, 1, figsize=(13, 19), sharex=True)
-    for ax, index in zip(axes, chosen, strict=True):
+    chosen = frame[np.isfinite(frame.score)].nlargest(6, "score").index
+    count = len(chosen)
+    fig, panels = plt.subplots(max(1, count), 1, figsize=(13, max(4, 3.2 * count)), sharex=True, squeeze=False)
+    axes = panels[:, 0]
+    if count == 0:
+        axes[0].text(0.5, 0.5, "No finite scored spectra available", ha="center", va="center")
+        axes[0].set_axis_off()
+    for ax, index in zip(axes[:count], chosen, strict=True):
         row = frame.loc[index]
         valid = ivar[index] > 0
         sigma = np.divide(1.0, np.sqrt(ivar[index]), out=np.zeros_like(wave), where=valid)
@@ -289,10 +294,12 @@ def plot_examples(
             loc="left",
         )
         ax.grid(alpha=0.15)
-    axes[0].legend(loc="upper right", fontsize=8, ncol=3)
-    axes[-1].set_xlabel("Rest-frame wavelength [Å]")
+    if count:
+        axes[0].legend(loc="upper right", fontsize=8, ncol=3)
+        axes[-1].set_xlabel("Rest-frame wavelength [Å]")
     fig.suptitle(
-        f"{key}: six highest residual scores in held-out tiles\nExploratory PCA rankings; no physical classification",
+        f"{key}: {count} highest residual scores in held-out tiles\n"
+        "Exploratory PCA rankings; no physical classification",
         fontsize=14,
     )
     fig.tight_layout(rect=(0, 0, 1, 0.97))

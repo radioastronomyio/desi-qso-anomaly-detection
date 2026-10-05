@@ -64,3 +64,49 @@ def test_source_state_success_returns_exact_stats_without_failure_record(tmp_pat
     ]
     assert not record.exists()
     assert source.read_bytes() == b"preserve me"
+
+
+@pytest.mark.parametrize("scored", [0, 1, 3, 8])
+def test_plot_examples_uses_available_finite_scores(tmp_path, monkeypatch, runner, scored):
+    import numpy as np
+
+    count = scored + 2
+    frame = pd.DataFrame(
+        {
+            "score": list(range(scored, 0, -1)) + [np.nan, np.inf],
+            "rank": list(range(1, scored + 1)) + [None, None],
+            "target_id": [39627953495081494 + i for i in range(count)],
+            "row_uid": [f"7:{i}" for i in range(count)],
+            "z": [1.6] * count,
+            "snr_proxy": [2.0] * count,
+            "masked_fraction": [0.0] * count,
+            "zero_ivar_fraction": [0.0] * count,
+        }
+    )
+    wave = np.linspace(1442, 3558, 20)
+    flux = np.repeat(np.arange(1, count + 1, dtype=float)[:, None], len(wave), axis=1)
+    figures = []
+    close = runner.plt.close
+
+    def remember_figure(fig):
+        if hasattr(fig, "axes"):
+            figures.append(fig)
+        close(fig)
+
+    monkeypatch.setattr(runner.plt, "close", remember_figure)
+    try:
+        runner.plot_examples("W2", frame, wave, flux, np.ones_like(flux), flux, tmp_path)
+        fig = figures[-1]
+        if scored:
+            assert len(fig.axes) == min(scored, 6)
+            for i, ax in enumerate(fig.axes):
+                assert f"TARGETID {39627953495081494 + i}" in ax.get_title(loc="left")
+                np.testing.assert_array_equal(ax.lines[0].get_ydata(), flux[i])
+        else:
+            assert len(fig.axes) == 1
+            assert any("No finite scored spectra" in text.get_text() for text in fig.axes[0].texts)
+        image = runner.plt.imread(tmp_path / "W2-top-spectra.png")
+        assert image.ndim == 3 and np.ptp(image) > 0
+        assert (tmp_path / "W2-top-spectra.pdf").read_bytes().startswith(b"%PDF-")
+    finally:
+        close("all")
