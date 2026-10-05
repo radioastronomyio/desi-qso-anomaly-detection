@@ -52,3 +52,7 @@ The existing identity-summary regression expected the raw converter expression i
 ## S5: Honor D2's supplied argument vector
 
 Forwarded `argv` to `parse_args`. A real synthetic D2 invocation now uses the requested work directory, converter file, population reference (10) and holdout fraction (0.2), despite unrelated hosting-process arguments. Before the fix it rejected the host option instead; afterward the saved summary contains seven rows, a gap of six, the requested source path and expected leakage 0.96. Full suite: **151 passed**. Ruff passes and Black formatted the identity tests, including the assertion introduced for S4; S4's module check passed, but its test-file formatting check had requested that wrapping change. No history was amended.
+
+## S6: Align the advertised Python minimum
+
+Updated the root README's Python badge from 3.11+ to 3.12+, matching `pyproject.toml`'s `requires-python = ">=3.12"`. Verified the README has no remaining 3.11 requirement. This documentation-only change requires no additional numerical test.
