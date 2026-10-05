@@ -92,9 +92,9 @@ Handoff: Repository structure and documentation complete. Awaiting upstream ARD 
 
 Blockers:
 
-1. desi-cosmic-void-galaxies Phase 05 (VAC ETL Sprint) — ingests QSO VACs
-2. desi-cosmic-void-galaxies Phase 06 (Validation) — certifies QSO ARD table
-3. desi-cosmic-void-galaxies Phase 07 (Tier 2 Compute) — generates embeddings and anomaly scores
+1. desi-cosmic-void-galaxies Phase 05 (VAC ETL Sprint): ingests QSO VACs
+2. desi-cosmic-void-galaxies Phase 06 (Validation): certifies QSO ARD table
+3. desi-cosmic-void-galaxies Phase 07 (Tier 2 Compute): generates embeddings and anomaly scores
 
 ---
 

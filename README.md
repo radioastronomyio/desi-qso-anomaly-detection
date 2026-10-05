@@ -5,7 +5,7 @@ description: "ML-driven discovery of anomalous quasars in DESI DR1 spectra"
 author: "VintageDon"
 date: "2026-03-29"
 version: "2.1"
-status: "Skeletal"
+status: "Active"
 tags:
   - type: project-root
   - domain: [ard-consumer, anomaly-detection, machine-learning]
@@ -20,10 +20,10 @@ related_documents:
 
 [![DESI DR1](https://img.shields.io/badge/Data-DESI%20DR1-green?logo=telescope)](https://data.desi.lbl.gov/doc/releases/dr1/)
 [![PostgreSQL](https://img.shields.io/badge/Database-PostgreSQL%2016-336791?logo=postgresql)](https://www.postgresql.org/)
-[![Python](https://img.shields.io/badge/Python-3.11+-3776ab?logo=python)](https://www.python.org/)
+[![Python](https://img.shields.io/badge/Python-3.12+-3776ab?logo=python)](https://www.python.org/)
 [![PyTorch](https://img.shields.io/badge/ML-PyTorch-ee4c2c?logo=pytorch)](https://pytorch.org/)
 [![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
-[![Status](https://img.shields.io/badge/Status-Skeletal-lightgrey)]()
+[![Status](https://img.shields.io/badge/Status-Active-green)]()
 
 ![Repository Banner](assets/desi-quasar-anomoly-detection-repo-banner.png)
 
@@ -31,7 +31,7 @@ related_documents:
 
 This project consumes the Analysis-Ready Dataset (ARD) built by [desi-cosmic-void-galaxies](https://github.com/radioastronomyio/desi-cosmic-void-galaxies) to perform large-scale anomaly detection across ~1.6 million QSO spectra. Using a Variational Autoencoder architecture, the goal is to systematically identify rare physical states, unknown object classes, and unexpected phenomena that would be missed by traditional catalog queries.
 
-Current Status: Skeletal. Repository structure established, awaiting ARD completion (Phase 05-06 in upstream project).
+Current Status: Active. Stage 0 (spectral manifest audit) complete; next is the experimental spectral loader, then anomaly modeling.
 
 ---
 
@@ -70,7 +70,7 @@ DESI DR1 is the largest uniform spectroscopic QSO sample ever assembled. The she
 
 ## 📦 Data Dependencies
 
-This project is an ARD consumer; it does not perform primary data ingestion. All catalog data and spectral embeddings come from the upstream ARD factory.
+This project is an ARD consumer; it does not perform primary data ingestion. Model training, representation, and anomaly scoring run in this repo.
 
 ### Upstream Provider
 
@@ -86,18 +86,19 @@ This project is an ARD consumer; it does not perform primary data ingestion. All
 | Z_HELIO | DESI Core | Redshift for rest-frame transformation |
 | SPECTYPE | DESI Core | QSO selection |
 | BAL_PROB | AGN VAC | Known BAL flagging |
-| LATENT_VEC | Tier 2 compute | 16-D spectral embedding |
-| RECON_MSE | Tier 2 compute | Reconstruction error |
-| ANOMALY_SCORE | Tier 2 compute | Isolation Forest score |
+| LATENT_VEC | This repo | 16-D spectral embedding (retired as a provider column) |
+| RECON_MSE | This repo | Reconstruction error (retired as a provider column) |
+| ANOMALY_SCORE | This repo | Isolation Forest score (retired as a provider column) |
 
 ### Spectral Data
 
 | Asset | Location | Purpose |
 |-------|----------|---------|
-| QSO Parquet tiles | radio-fs02 (10.25.20.15) | Raw spectra for validation |
-| Linkage index | PostgreSQL (radio-pgsql01) | TARGETID to tile mapping |
+| QSO Parquet corpus | /mnt/nvme01/desidr1-parquet-tiles/desi-qad | Stage 0 audited corpus: 10,793 files, 1,030,934 unique QSOs (zero duplication) |
+| Manifest artifacts | /mnt/nvme01/desidr1-manifest | v1 file and object manifests plus provenance |
+| Findings report | work-logs/2026-08-15-spectral-manifest-audit.md | Measured contract and open defects |
 
-Note: The core ML metrics (LATENT_VEC, RECON_MSE, ANOMALY_SCORE) are computed upstream as Tier 2 ARD columns. This project focuses on candidate validation and scientific interpretation rather than model training.
+Note: The core ML metrics are computed in this repo, not by the provider; the provider-computed LATENT_VEC, RECON_MSE, and ANOMALY_SCORE expectation is retired. rr_chi2 is absent from the archive and ARD-embedded columns are not part of the measured contract (see the findings report's open defects).
 
 ---
 
@@ -183,20 +184,19 @@ graph TD
 | Phase | Name | Status | Blocker |
 |-------|------|--------|---------|
 | — | Repository Setup | ✅ Complete | — |
-| — | ARD Dependency | ⏳ Waiting | Upstream Phase 05-06 |
-| — | Tier 2 Embeddings | ⏳ Waiting | Upstream Phase 07 |
-| 01 | Candidate Ranking | ⬜ Not Started | Embeddings available |
+| 00 | Spectral Manifest Audit | ✅ Complete | None |
+| 01 | Candidate Ranking | ⏳ Next | Experimental loader, then model training |
 | 02 | Visual Validation | ⬜ Not Started | Phase 01 |
 | 03 | Cross-Match | ⬜ Not Started | Phase 02 |
 | 04 | Catalog Release | ⬜ Not Started | Phase 03 |
 
 ### Prerequisites
 
-Before work begins on this project:
+No upstream blockers remain; Stage 0 established the corpus contract:
 
-1. ARD Phase 05-06 must complete (validates QSO catalog)
-2. ARD Phase 07 (Tier 2 compute) must generate spectral embeddings
-3. LATENT_VEC, RECON_MSE, ANOMALY_SCORE columns must be populated
+1. Audited local corpus: 10,793 Parquet files, 1,030,934 unique QSOs, zero target_id duplication
+2. Manifest artifacts at /mnt/nvme01/desidr1-manifest/
+3. Loader implements the measured arm merge contract before modeling (see the findings report)
 
 ---
 
@@ -209,18 +209,21 @@ desi-qso-anomaly-detection/
 │   ├── 📂 documentation-standards/   # Templates, tagging strategy
 │   └── 📄 data-science-infrastructure.md
 ├── 📂 internal-files/                # Working documents
+├── 📂 scripts/                       # Stage 0 audit scripts (D1-D6)
 ├── 📂 shared/                        # Cross-cutting assets
-├── 📂 spec/                          # Specifications
 ├── 📂 staging/                       # Staged work
+├── 📂 src/                           # dqad_audit shared package
+├── 📂 tests/                         # Unit tests
 ├── 📂 work-logs/                     # Milestone documentation
 ├── 📄 AGENTS.md                      # Agent instructions
 ├── 📄 CLAUDE.md                      # Pointer to AGENTS.md
 ├── 📄 LICENSE
 ├── 📄 LICENSE-DATA
+├── 📄 pyproject.toml                 # Audit tooling package config
 └── 📄 README.md                      # This file
 ```
 
-Code directories (`src/`, `scripts/`, `notebooks/`, `tests/`) will be created when upstream ARD dependencies are met and active development begins.
+The Stage 0 audit code lives in `src/` (shared `dqad_audit` package), `scripts/` (five stage scripts), and `tests/` (133 unit tests).
 
 ---
 
@@ -244,7 +247,7 @@ This project runs on the [radioastronomy.io](https://github.com/radioastronomyio
 |---------|------|--------|
 | [desi-cosmic-void-galaxies](https://github.com/radioastronomyio/desi-cosmic-void-galaxies) | ARD provider (upstream) | Active |
 | [desi-quasar-outflows](https://github.com/radioastronomyio/desi-quasar-outflows) | Outflow energetics (consumer) | Skeletal |
-| This repo | Anomaly detection (consumer) | Skeletal |
+| This repo | Anomaly detection (consumer) | Active |
 
 ### External Resources
 
@@ -270,4 +273,4 @@ This project is licensed under the MIT License. See [LICENSE](LICENSE) for detai
 
 ---
 
-Last Updated: 2026-03-29 | Status: Skeletal (Awaiting ARD + Embeddings)
+Last Updated: 2026-08-15 | Status: Active (Stage 0 complete; Phase 01 next)

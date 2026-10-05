@@ -21,6 +21,7 @@ config.local.*
 staging/
 spec/
 internal-files/
+.superpowers/
 
 # ----------------------------------------------------------------------------
 # IDE & EDITOR

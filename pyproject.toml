@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dqad-audit"
+version = "0.1.0"
+description = "Read-only audit tooling for the DESI DR1 QSO spectral Parquet corpus"
+readme = "README.md"
+requires-python = ">=3.12"
+authors = [{ name = "VintageDon", url = "https://github.com/vintagedon/" }]
+license = { text = "MIT" }
+dependencies = ["pyarrow>=15.0", "numpy>=1.26", "pandas>=2.2"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "ruff>=0.4", "black>=24.0"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+src = ["src", "scripts", "tests"]
+extend-exclude = ["shared"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+
+[tool.ruff.lint.per-file-ignores]
+"scripts/*" = ["E402"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["dqad_audit"]
+
+[tool.black]
+line-length = 120
+target-version = ["py312"]
+extend-exclude = "shared"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+filterwarnings = ["error"]
+addopts = "-q"

@@ -1,3 +1,17 @@
+<!--
+---
+title: "Data Infrastructure Reference"
+description: "Compute cluster resources, connection patterns, and processing defaults"
+author: "VintageDon (https://github.com/vintagedon/)"
+date: "2026-08-15"
+version: "1.0"
+status: "Active"
+tags:
+  - type: reference
+  - domain: infrastructure
+---
+-->
+
 # Data Infrastructure Reference
 
 This project uses shared research infrastructure on the radioastronomy.io cluster. This document provides connection details and usage patterns.
@@ -11,7 +25,7 @@ This project uses shared research infrastructure on the radioastronomy.io cluste
 | 2005 | radio-gpu01 | Ubuntu 24.04 | 10.25.20.10 | 12 | 48G | 100G | Data science / ML VM (A4000 GPU) |
 | 2018 | radio-neo4j01 | Ubuntu 24.04 | 10.25.20.21 | 6 | 24G | 250G | Graph database |
 | 2016 | radio-mongo01 | Ubuntu 24.04 | 10.25.20.18 | 2 | 4G | 100G | Document database (available, unused) |
-| 2003 | radio-dfdb01 | Ubuntu 24.04 | 10.25.20.23 | 4 | 8G | — | DragonFlyDB |
+| 2003 | radio-dfdb01 | Ubuntu 24.04 | 10.25.20.23 | 4 | 8G | n/a | DragonFlyDB |
 | 2011 | radio-fs02 | Server 2025 | 10.25.20.15 | 4 | 6G | 125G | Windows SMB (ML data shares, DESIVAST parquets) |
 | 2007 | radio-fs01 | Ubuntu 24.04 | 10.25.20.11 | 2 | 6G | 1TB | NFS server (available, unused) |
 | 3001 | radio-k8s01 | Ubuntu 24.04 | 10.25.20.4 | 12 | 48G | 1TB | Kubernetes primary node |
@@ -51,10 +65,10 @@ conn = psycopg2.connect(
 
 Available databases on pgsql01:
 
-- `PGSQL01_DESIVAST_DB` — DESI-VAST void catalog
-- `PGSQL01_FASTSPEC_DB` — FastSpecFit spectroscopic data
-- `PGSQL01_COSMICVOIDS_ARD_DB` — Cosmic voids analysis-ready dataset
-- `PGSQL01_RBH1_DB` — RBH-1 validation data
+- `PGSQL01_DESIVAST_DB`: DESI-VAST void catalog
+- `PGSQL01_FASTSPEC_DB`: FastSpecFit spectroscopic data
+- `PGSQL01_COSMICVOIDS_ARD_DB`: Cosmic voids analysis-ready dataset
+- `PGSQL01_RBH1_DB`: RBH-1 validation data
 
 ### Neo4j
 
@@ -84,9 +98,9 @@ response = requests.post(
 
 Default batch processing configuration from env:
 
-- `BATCH_SIZE=10000` — Records per batch
-- `MAX_WORKERS=4` — Parallel workers
-- `ML_PROCESSING_MODE=remote_gpu` — Offload ML to gpu01
+- `BATCH_SIZE=10000`: Records per batch
+- `MAX_WORKERS=4`: Parallel workers
+- `ML_PROCESSING_MODE=remote_gpu`: Offload ML to gpu01
 
 ## Monitoring
 
