@@ -78,3 +78,9 @@ When `main(argv)` is used, D2 now records the resolved script path followed by t
 ### T2: Preserve nonfinite values for histogram accounting
 
 `build_redshift_block` now passes the original redshift sequence to `z_histogram`, while finite values remain the input to moments and quantiles. The dedicated regression supplies two finite and two nonfinite values. It failed with `count_nonfinite=2` beside `histogram.count_nonfinite_excluded=0`, then passed with both counts equal to two and two finite values inside the histogram. Full suite: **153 passed**. No Stage 0 output was regenerated.
+
+### T3: Record the actual array-audit sampling stride
+
+`build_array_audit_run_config` now accepts the actual stride returned by the sampling recipe. D3 passes `sampling_recipe["stride"]`; it no longer derives a false value from the achieved selection count. The dedicated default-scale regression supplies 514 selected paths, target 512 and stride 21. It initially failed because the builder had no true-stride input and the old calculation would produce one; it now records stride 21 and 514 selected files. Full suite: **154 passed**.
+
+The [2026-10-05 metadata erratum](../docs/2026-10-05-stage0-metadata-erratum.md) records the sealed-artifact check. The August checkpoint `work/parts/array_audit/run_config.json` says stride 1; the true stride is 21, with start 17 over 10,793 files and 514 selected. `work/array_audit_summary.json` and the sealed report already carry the true values, and sampling was unaffected because file selection used that recipe before the faulty run-config field was built. The sealed identity command (`scripts/02_identity_duplication.py`) is correct because that run used the CLI. The sealed redshift summary is also correct: all 1,030,934 values are finite, so both nonfinite counts are zero and 1,030,934 values are inside the histogram. None of those files was edited or regenerated.

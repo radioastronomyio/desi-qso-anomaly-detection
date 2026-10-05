@@ -193,6 +193,22 @@ def test_sampled_tile_selection_stride_and_bounds() -> None:
         sampled_tile_selection(5, 10, 1)
 
 
+def test_array_audit_run_config_records_selection_stride(tmp_path: Path) -> None:
+    selected = [tmp_path / f"tile_{index:05d}.parquet" for index in range(514)]
+    config = build_array_audit_run_config(
+        tmp_path,
+        selected,
+        seed=20260815,
+        target_tiles=512,
+        stride=21,
+        rows_per_tile=64,
+        neardup_tolerance=0.1,
+        chunk_size=250,
+    )
+    assert config["stride"] == 21
+    assert config["n_files_selected"] == 514
+
+
 def test_select_sampled_tiles_deterministic_and_seed_sensitive(tmp_path: Path) -> None:
     names = [f"tile_{10000 + index}/qso_data_TILE{10000 + index}_5_qsos.parquet" for index in range(30)]
     files = [tmp_path / name for name in names]
@@ -444,6 +460,7 @@ def test_fence_prunes_parts_on_sampling_change(tmp_path: Path, audit) -> None:
         files,
         seed=20260815,
         target_tiles=2,
+        stride=1,
         rows_per_tile=2,
         neardup_tolerance=0.1,
         chunk_size=2,
@@ -459,6 +476,7 @@ def test_fence_prunes_parts_on_sampling_change(tmp_path: Path, audit) -> None:
         files,
         seed=999,
         target_tiles=2,
+        stride=1,
         rows_per_tile=2,
         neardup_tolerance=0.1,
         chunk_size=2,
@@ -471,6 +489,7 @@ def test_fence_prunes_parts_on_sampling_change(tmp_path: Path, audit) -> None:
         files,
         seed=20260815,
         target_tiles=2,
+        stride=1,
         rows_per_tile=4,
         neardup_tolerance=0.1,
         chunk_size=2,
@@ -501,7 +520,14 @@ def test_resume_without_inventory_rechecks_legacy_partial_chunk(tmp_path, audit,
     work_dir = tmp_path / "work"
     files = write_audit_corpus(corpus, [("tile_10000", 3), ("tile_10001", 3)])
     config = build_array_audit_run_config(
-        corpus, files, seed=20260815, target_tiles=2, rows_per_tile=2, neardup_tolerance=0.1, chunk_size=2
+        corpus,
+        files,
+        seed=20260815,
+        target_tiles=2,
+        stride=1,
+        rows_per_tile=2,
+        neardup_tolerance=0.1,
+        chunk_size=2,
     )
     audit.apply_sampling_fence(work_dir, config)
     tasks = audit.build_tasks(files, 20260815, 2, 0.1)

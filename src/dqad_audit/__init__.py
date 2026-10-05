@@ -1851,6 +1851,7 @@ def build_array_audit_run_config(
     *,
     seed: int,
     target_tiles: int,
+    stride: int,
     rows_per_tile: int,
     neardup_tolerance: float,
     chunk_size: int,
@@ -1867,7 +1868,9 @@ def build_array_audit_run_config(
     seed : int
         Master sampling seed.
     target_tiles : int
-        Target tile count determining the stride with the file count.
+        Approximate requested tile count recorded for provenance.
+    stride : int
+        Actual stride returned by the systematic tile selection.
     rows_per_tile : int
         Exact rows sampled per tile.
     neardup_tolerance : float
@@ -1885,7 +1888,7 @@ def build_array_audit_run_config(
         "corpus_root": str(Path(corpus_root)),
         "sampling_seed": int(seed),
         "target_tiles": int(target_tiles),
-        "stride": int(len(selected_files) // max(1, target_tiles)) if selected_files else 0,
+        "stride": int(stride),
         "rows_per_tile": int(rows_per_tile),
         "neardup_tol_angstrom": float(neardup_tolerance),
         "chunk_size": int(chunk_size),

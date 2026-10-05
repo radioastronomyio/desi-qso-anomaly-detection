@@ -470,6 +470,7 @@ def main(argv: list[str] | None = None) -> None:
         selected,
         seed=args.seed,
         target_tiles=args.target_tiles,
+        stride=sampling_recipe["stride"],
         rows_per_tile=args.rows_per_tile,
         neardup_tolerance=args.neardup_tol,
         chunk_size=args.chunk_size,
