@@ -1166,8 +1166,6 @@ def build_identity_summary(
     required = duplicated_ids > 0
     train_share = round(1.0 - holdout_fraction, 10)
     holdout_share = round(holdout_fraction, 10)
-    filter_code = str(converter_filter["selection_filter"]["code"])
-    filter_line = int(converter_filter["selection_filter"]["line"])
     if duplicated_ids:
         interpretation = (
             "DESI reobserves targets, so rows with k > 1 are expected to be reobservations of the same "
@@ -1216,11 +1214,8 @@ def build_identity_summary(
         "gap_accounting": {
             **gap,
             "accounting": (
-                f"The archive is a strict subset of the DR1 QSO-classified population: the converter "
-                f"keeps only rows passing `{filter_code}` (converter source line {filter_line}, applied to "
-                f"the per-tile redrock REDSHIFTS HDU), which removes non-QSO classifications and redshift-fit "
-                f"failures (ZWARN != 0). The remaining gap of {gap['gap']} ids "
-                f"({gap['gap_fraction']:.4%} of the reference) is therefore expected from selection, not row loss."
+                "consistent with the converter's SPECTYPE==QSO and ZWARN==0 filter; "
+                "the excluded count was not measured"
             ),
             "converter_filter": dict(converter_filter),
             "other_causes_flagged": list(concerns),

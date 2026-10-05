@@ -308,7 +308,13 @@ def test_summary_rates_gap_and_holdout_derived_from_data(converter_source) -> No
     assert summary["rates"]["excess_row_fraction"] == pytest.approx(3 / 7)
     assert summary["gap_accounting"]["gap"] == 1_550_000 - 4
     assert summary["gap_accounting"]["gap_fraction"] == pytest.approx((1_550_000 - 4) / 1_550_000)
-    assert 'if row["SPECTYPE"] == "QSO" and row["ZWARN"] == 0' in summary["gap_accounting"]["accounting"]
+    assert summary["gap_accounting"]["converter_filter"]["selection_filter"]["code"] == (
+        'if row["SPECTYPE"] == "QSO" and row["ZWARN"] == 0'
+    )
+    assert summary["gap_accounting"]["accounting"] == (
+        "consistent with the converter's SPECTYPE==QSO and ZWARN==0 filter; "
+        "the excluded count was not measured"
+    )
     assert summary["holdout"]["required"] is True
     assert summary["holdout"]["expected_leakage_naive_90_10"] == pytest.approx(3 * 0.18)
     assert "reobservations" in summary["repeat_distribution"]["interpretation"]
