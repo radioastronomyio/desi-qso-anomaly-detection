@@ -147,3 +147,36 @@ def test_report_renders_insufficient_overlap_and_preserves_large_target_ids(tmp_
     report = (tmp_path / "report.md").read_text()
     assert "insufficient" in report
     assert "39627953495081495" in report
+
+
+@pytest.mark.parametrize("window_order", [("W2",), ("W3", "W1", "W2")])
+def test_window_sample_is_independent_of_candidate_order_and_subset(monkeypatch, window_order):
+    from dqad_audit import experiment
+
+    objects = pd.DataFrame(
+        [
+            dict(tile_id=str(i), row_uid=f"{i}:{j}", target_id=3 * i + j, z=z)
+            for i in range(60)
+            for j, z in enumerate([0.6, 1.6, 2.2])
+        ]
+    )
+    reference = select_candidates(objects, seed=20261004, n_train=10, n_holdout=5)["W2"]
+    candidates = experiment.CANDIDATES.copy()
+    monkeypatch.setattr(experiment, "CANDIDATES", {key: candidates[key] for key in window_order})
+    changed = select_candidates(objects, seed=20261004, n_train=10, n_holdout=5)["W2"]
+    pd.testing.assert_frame_equal(reference, changed)
+
+
+@pytest.mark.parametrize("window_id", ["W1", "W2", "W3"])
+def test_explicit_window_subset_retains_its_sample_and_global_split(window_id):
+    objects = pd.DataFrame(
+        [
+            dict(tile_id=str(i), row_uid=f"{i}:{j}", target_id=3 * i + j, z=z)
+            for i in range(60)
+            for j, z in enumerate([0.6, 1.6, 2.2])
+        ]
+    )
+    all_windows = select_candidates(objects, n_train=10, n_holdout=5)
+    single = select_candidates(objects, n_train=10, n_holdout=5, window_ids=(window_id,))
+    assert list(single) == [window_id]
+    pd.testing.assert_frame_equal(all_windows[window_id], single[window_id])

@@ -177,3 +177,11 @@ The concrete validation used newly created `/tmp/dqad-pr2-review-venv.l0PnUN`, w
 Extended the temporary archive fixture to write multiple rows and configurable row-group sizes. The new test writes seven distinct spectra in groups of sizes `[2,2,2,1]` and requests offsets `[6,2,1,4,3]`. It crosses both sides of group boundaries, including offsets 2, 4 and 6 exactly equal to cumulative group ends, and checks exact target IDs, redshifts, full flux arrays, selected row_uids, and unchanged source size/mtime.
 
 All eight manifest-loader tests pass. An in-memory mutation changing `searchsorted(..., side="right")` to `side="left"` makes the new test fail at a boundary; the checked-out implementation was never changed. Full suite: **168 passed**. Focused Ruff/Black pass. The previously deferred multi-row-group coverage item is now resolved; no loader algorithm change was needed.
+
+### R3: Independent window seeds and pinned W2 reference
+
+`select_candidates` now uses fixed `SeedSequence(seed).spawn(3)` children keyed permanently to window IDs: W1 `(0,)`, W2 `(1,)`, W3 `(2,)`. Reordering or omitting other candidates no longer changes a window's sample. The global tile split retains its original independent `default_rng(seed)` permutation; callers must supply the full manifest even when requesting `window_ids=("W2",)`. Future provenance identifies `window-child-seeds-v2` and each window's spawn key.
+
+Before the fix, regressions demonstrated that omitting W1 or moving W2 to the end changed its selected rows. They now pass, and each W1/W2/W3 subset exactly matches the corresponding full-selection result. Full suite: **173 passed**. Ruff/Black checks pass. Tests use synthetic manifests only; no data experiment was rerun.
+
+**Reference sample for the next unit:** `/opt/agents/repos/desi-qso-anomaly-detection/staging/2026-10-04-astra-loader-experiment/run-01/W2-selection.csv`; SHA-256 `229e16debf3688edb3799876e5424d7050a49f3dfa55928ca2995bb2b56cc997`; 94,101 bytes; 768 unique targets, split into 576 training and 192 holdout rows with zero shared tiles. The original source state is `85bb364`. The next unit must load that file and its recorded split rather than regenerate it with the new sampler. `review-fixes/W2-reference-sample.json` and the staging README carry the same explicit handoff. All run-01 files remain the original recorded evidence.

@@ -19,6 +19,10 @@ CANDIDATES = {
     "W3": (1.0, 2.5, 733045),
 }
 SEED = 20261004
+# Fixed window IDs, independent of dictionary order or the requested subset.
+# Reserve each existing child index permanently when adding future windows.
+WINDOW_SPAWN_KEYS = {"W1": 0, "W2": 1, "W3": 2}
+SAMPLING_VERSION = "window-child-seeds-v2"
 
 
 @dataclass(frozen=True)
@@ -41,23 +45,41 @@ class Baseline:
 
 
 def select_candidates(
-    objects: pd.DataFrame, seed: int = SEED, n_train: int = 576, n_holdout: int = 192
+    objects: pd.DataFrame,
+    seed: int = SEED,
+    n_train: int = 576,
+    n_holdout: int = 192,
+    window_ids: tuple[str, ...] | None = None,
 ) -> dict[str, pd.DataFrame]:
-    """Uniform row samples within a globally shared, seeded tile split."""
+    """Sample each window from its fixed SeedSequence child and shared tile split.
+
+    Supply the full object manifest even when requesting a subset of windows,
+    so the tile universe remains fixed. W1/W2/W3 use child spawn keys (0,),
+    (1,), (2,). These v2 samples intentionally differ from the recorded run-01;
+    use its saved selection CSV when continuing that experiment.
+    """
+    window_ids = tuple(CANDIDATES) if window_ids is None else tuple(window_ids)
+    if len(set(window_ids)) != len(window_ids) or any(
+        key not in CANDIDATES or key not in WINDOW_SPAWN_KEYS for key in window_ids
+    ):
+        raise ValueError("window IDs must be unique registered candidates")
     if objects.target_id.duplicated().any() or objects.row_uid.duplicated().any():
         raise ValueError("selection requires unique objects")
     tiles = np.array(sorted(objects.tile_id.unique()))
     rng = np.random.default_rng(seed)
     holdout = set(rng.permutation(tiles)[: max(1, len(tiles) // 4)])
+    children = np.random.SeedSequence(seed).spawn(max(WINDOW_SPAWN_KEYS.values()) + 1)
     result = {}
-    for key, (lo, hi, _) in CANDIDATES.items():
+    for key in window_ids:
+        lo, hi, _ = CANDIDATES[key]
+        window_rng = np.random.default_rng(children[WINDOW_SPAWN_KEYS[key]])
         eligible = objects[(objects.z >= lo) & (objects.z < hi)].sort_values("row_uid")
         parts = []
         for split, count in [("train", n_train), ("holdout", n_holdout)]:
             pool = eligible[eligible.tile_id.isin(holdout) == (split == "holdout")]
             if len(pool) < count:
                 raise ValueError(f"insufficient eligible objects: {key} {split}")
-            chosen = pool.iloc[rng.choice(len(pool), count, replace=False)].copy()
+            chosen = pool.iloc[window_rng.choice(len(pool), count, replace=False)].copy()
             chosen["split"] = split
             parts.append(chosen)
         result[key] = pd.concat(parts).sort_values("row_uid").reset_index(drop=True)

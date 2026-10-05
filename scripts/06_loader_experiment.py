@@ -45,7 +45,9 @@ sys.path.insert(0, str(REPO / "src"))
 from dqad_audit import compare_corpus_snapshots, snapshot_records
 from dqad_audit.experiment import (
     CANDIDATES,
+    SAMPLING_VERSION,
     SEED,
+    WINDOW_SPAWN_KEYS,
     fit_baseline,
     normalize,
     nuisance_diagnostics,
@@ -492,6 +494,8 @@ def main() -> None:
     ]
     provenance = dict(
         seed=SEED,
+        sampling_version=SAMPLING_VERSION,
+        window_spawn_keys={key: [WINDOW_SPAWN_KEYS[key]] for key in selected},
         components=8,
         grid_step_angstrom=4,
         selected_per_window=dict(train=576, holdout=192),
