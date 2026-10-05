@@ -314,10 +314,12 @@ def run_audit(
         for future in as_completed(futures):
             index = futures[future]
             result = future.result()
-            write_part(array_audit_part_table(result["rows"]), part_filepath(work_dir, ARRAY_AUDIT_PART_KIND, index))
             for error in result["errors"]:
                 logger.warning("open failure: %s (%s)", error["path"], error["error"])
             errors.extend(result["errors"])
+            if result["errors"]:
+                continue
+            write_part(array_audit_part_table(result["rows"]), part_filepath(work_dir, ARRAY_AUDIT_PART_KIND, index))
             chunk_len = len(chunks[index])
             if completed // PROGRESS_EVERY < (completed + chunk_len) // PROGRESS_EVERY:
                 logger.info("progress: %d/%d tiles audited", completed + chunk_len, total_files)
@@ -479,6 +481,10 @@ def main(argv: list[str] | None = None) -> None:
     chunks = plan_chunks(tasks, args.chunk_size)
     expected_rows = expected_part_rows(chunks, inventory_counts, args.rows_per_tile)
     _, errors, audit_seconds = run_audit(chunks, args.work_dir, args.workers, expected_rows)
+    if errors:
+        for error in errors:
+            logger.error("unresolvable read failure: %s (%s)", error["path"], error["error"])
+        raise SystemExit(f"aborting: {len(errors)} file(s) failed to read; every selected file is required")
     assembly_start = time.perf_counter()
     parts_table = assemble_table(args.work_dir, chunks)
     final_table = project_array_audit_table(parts_table)

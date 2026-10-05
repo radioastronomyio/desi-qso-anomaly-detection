@@ -471,3 +471,20 @@ def test_fence_prunes_parts_on_sampling_change(tmp_path: Path, audit) -> None:
         chunk_size=2,
     )
     assert audit.apply_sampling_fence(work_dir, retuned) == "pruned_parts"
+
+
+@pytest.mark.parametrize("failure", ["unreadable", "missing_column"])
+def test_read_failure_aborts_without_partial_checkpoint_or_summary(tmp_path, audit, failure):
+    corpus = tmp_path / "corpus"
+    work_dir = tmp_path / "work"
+    files = write_audit_corpus(corpus, [("tile_10000", 3), ("tile_10001", 3)])
+    if failure == "unreadable":
+        files[1].write_bytes(b"not a parquet file")
+    else:
+        table = pq.read_table(files[1]).drop(["flux"])
+        pq.write_table(table, files[1])
+    with pytest.raises(SystemExit, match=r"1 file\(s\) failed to read"):
+        run_script(audit, corpus, work_dir, seed=20260815)
+    assert not list((work_dir / "parts" / ARRAY_AUDIT_PART_KIND).glob("*.parquet"))
+    assert not (work_dir / ARRAY_AUDIT_FILENAME).exists()
+    assert not (work_dir / ARRAY_AUDIT_SUMMARY_FILENAME).exists()
