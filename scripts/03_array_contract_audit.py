@@ -508,7 +508,7 @@ def main(argv: list[str] | None = None) -> None:
         "host": platform.node(),
         "python_version": platform.python_version(),
         "package_versions": {"pyarrow": pa.__version__, "numpy": np.__version__, "pandas": pd.__version__},
-        "command": shlex.join(sys.argv),
+        "command": shlex.join(sys.argv if argv is None else [str(Path(__file__).resolve()), *argv]),
         "workers": int(args.workers),
         "chunk_size": int(args.chunk_size),
         "corpus_root": str(args.corpus_root),

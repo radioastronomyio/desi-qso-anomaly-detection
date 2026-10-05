@@ -38,6 +38,8 @@ from __future__ import annotations
 import importlib.util
 import json
 import math
+import shlex
+import sys
 from pathlib import Path
 
 import numpy as np
@@ -614,3 +616,26 @@ def test_resumed_run_recomputes_warning_provenance_from_reused_chunk(tmp_path, s
     }
     assert first["provenance"]["warnings"] == expected
     assert resumed["provenance"]["warnings"] == expected
+
+
+def test_scalars_records_supplied_arguments_in_provenance(tmp_path, script, monkeypatch):
+    corpus = tmp_path / "corpus"
+    work_dir = tmp_path / "work"
+    files = write_scalars_corpus(corpus, [("tile_10000", 2)])
+    write_inventory(work_dir, corpus, files)
+    supplied = [
+        "--corpus-root",
+        str(corpus),
+        "--work-dir",
+        str(work_dir),
+        "--workers",
+        "1",
+        "--chunk-size",
+        "1",
+    ]
+    monkeypatch.setattr(sys, "argv", ["hosting-process", "--unrelated-host-option"])
+
+    script.main(supplied)
+
+    summary = json.loads((work_dir / REDSHIFT_SUMMARY_FILENAME).read_text(encoding="utf-8"))
+    assert summary["provenance"]["command"] == shlex.join([str(SCRIPT_PATH), *supplied])

@@ -96,3 +96,7 @@ When a present `inventory_summary.json` reports any open failure or its total ro
 ### U2: Make D4 warning provenance independent of resume history
 
 D4 now recomputes per-file null-SNR, nonfinite-redshift and nonpositive-redshift warning records from the complete assembled checkpoint table, attaching the source paths from the deterministic task list. Warning provenance therefore describes all assembled data regardless of whether each chunk was scanned or reused in the current invocation. The synthetic resume regression first produced a warning-bearing checkpoint, then reused it; before the fix the second summary replaced all three warning classes with zero, and afterward both summaries carry the same file counts and examples. Full Stage 0 suite: **157 passed**; focused Ruff passed and Black formatting passed after applying the formatter. No corpus or sealed artifact was read or regenerated.
+
+### U3: Record supplied arguments in D3, D4 and D6 provenance
+
+D3, D4 and D6 now mirror D2: programmatic `main(argv)` calls record the resolved script path followed by the supplied argument vector, while normal CLI calls continue to record `sys.argv`. Three synthetic end-to-end regressions set unrelated host-process arguments and invoke each stage with explicit paths and options. All three failed by recording the host command before the fix and now record the supplied invocation exactly. Full Stage 0 suite: **160 passed**; repository-focused Ruff and Black checks pass after applying Ruff's import ordering. No corpus or sealed artifact was read or regenerated.

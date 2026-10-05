@@ -38,6 +38,8 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import shlex
+import sys
 from pathlib import Path
 
 import numpy as np
@@ -548,3 +550,36 @@ def test_resume_without_inventory_rechecks_legacy_partial_chunk(tmp_path, audit,
         result = pq.read_table(work_dir / ARRAY_AUDIT_FILENAME)
         assert result.num_rows == 4
         assert result.column("tile_id").to_pylist() == ["10000", "10000", "10001", "10001"]
+
+
+def test_array_audit_records_supplied_arguments_in_provenance(tmp_path, audit, monkeypatch):
+    corpus = tmp_path / "corpus"
+    work_dir = tmp_path / "work"
+    files = write_audit_corpus(corpus, [("tile_10000", 2), ("tile_10001", 2)])
+    work_dir.mkdir()
+    pq.write_table(
+        pa.table({"path": [str(path) for path in files], "n_rows_actual": [2, 2]}),
+        work_dir / "inventory.parquet",
+    )
+    supplied = [
+        "--corpus-root",
+        str(corpus),
+        "--work-dir",
+        str(work_dir),
+        "--workers",
+        "1",
+        "--seed",
+        "20260815",
+        "--target-tiles",
+        "2",
+        "--rows-per-tile",
+        "1",
+        "--chunk-size",
+        "1",
+    ]
+    monkeypatch.setattr(sys, "argv", ["hosting-process", "--unrelated-host-option"])
+
+    audit.main(supplied)
+
+    summary = json.loads((work_dir / ARRAY_AUDIT_SUMMARY_FILENAME).read_text(encoding="utf-8"))
+    assert summary["provenance"]["command"] == shlex.join([str(SCRIPT_PATH), *supplied])

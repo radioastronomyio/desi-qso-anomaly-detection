@@ -38,6 +38,8 @@ from __future__ import annotations
 import importlib.util
 import json
 import os
+import shlex
+import sys
 from pathlib import Path
 
 import pyarrow as pa
@@ -583,3 +585,28 @@ def test_failed_build_preserves_entire_published_set(script, tmp_path, monkeypat
         if (output_dir / name).exists()
     }
     assert after == before
+
+
+def test_manifest_builder_records_supplied_arguments_in_provenance(tmp_path, script, monkeypatch):
+    corpus_root = tmp_path / "corpus"
+    work_dir = tmp_path / "work"
+    output_dir = tmp_path / "out"
+    build_synthetic_work(corpus_root, work_dir)
+    supplied = [
+        "--corpus-root",
+        str(corpus_root),
+        "--work-dir",
+        str(work_dir),
+        "--output-dir",
+        str(output_dir),
+        "--seed",
+        "17",
+        "--spot-rows",
+        "2",
+    ]
+    monkeypatch.setattr(sys, "argv", ["hosting-process", "--unrelated-host-option"])
+
+    script.main(supplied)
+
+    provenance = json.loads((output_dir / "manifest_provenance.json").read_text(encoding="utf-8"))
+    assert provenance["command"] == shlex.join([str(SCRIPT_PATH), *supplied])
