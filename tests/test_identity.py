@@ -33,6 +33,7 @@ Examples
 from __future__ import annotations
 
 import json
+import shlex
 from typing import Any
 
 import pytest
@@ -382,21 +383,54 @@ def test_identity_main_uses_supplied_paths_and_population(tmp_path, converter_so
         work_dir / "target_ids.parquet",
     )
     monkeypatch.setattr(sys, "argv", ["hosting-process", "--unrelated-host-option"])
-    module.main(
-        [
-            "--work-dir",
-            str(work_dir),
-            "--converter-source",
-            str(converter_source),
-            "--population-reference",
-            "10",
-            "--holdout-fraction",
-            "0.2",
-        ]
-    )
+    supplied = [
+        "--work-dir",
+        str(work_dir),
+        "--converter-source",
+        str(converter_source),
+        "--population-reference",
+        "10",
+        "--holdout-fraction",
+        "0.2",
+    ]
+    module.main(supplied)
     summary = json.loads((work_dir / "identity_summary.json").read_text())
     assert summary["totals"]["total_rows"] == 7
     assert summary["gap_accounting"]["population_reference"] == 10
     assert summary["gap_accounting"]["gap"] == 6
     assert summary["gap_accounting"]["converter_filter"]["source_path"] == str(converter_source)
     assert summary["holdout"]["expected_leakage_naive_90_10"] == pytest.approx(0.96)
+
+
+def test_identity_main_records_supplied_arguments_in_provenance(tmp_path, converter_source, monkeypatch):
+    import importlib.util
+    import sys
+    from pathlib import Path
+
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+
+    path = Path(__file__).resolve().parents[1] / "scripts" / "02_identity_duplication.py"
+    spec = importlib.util.spec_from_file_location("identity_provenance_script", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    work_dir = tmp_path / "requested-work"
+    work_dir.mkdir()
+    pq.write_table(
+        pa.table({"tile_id": TILES, "row_idx": [0, 1, 2, 0, 1, 0, 1], "target_id": TIDS}),
+        work_dir / "target_ids.parquet",
+    )
+    supplied = [
+        "--work-dir",
+        str(work_dir),
+        "--converter-source",
+        str(converter_source),
+        "--population-reference",
+        "10",
+        "--holdout-fraction",
+        "0.2",
+    ]
+    monkeypatch.setattr(sys, "argv", ["hosting-process", "--unrelated-host-option"])
+    module.main(supplied)
+    summary = json.loads((work_dir / "identity_summary.json").read_text())
+    assert summary["provenance"]["command"] == shlex.join([str(path), *supplied])

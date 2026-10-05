@@ -66,3 +66,11 @@ The scripts README now identifies the default absolute path in the separate `des
 Final Stage 0 checks: **151 tests passed**, repository-wide Ruff passed, Black passed (16 Python files), and whitespace validation passed. An isolated archive of PR #2 at `6a924642c6d800ec0e60144c3eea8f9a6528ccab` accepted the complete Stage 0 change patch without conflicts. Its combined suite passed **198 tests**, Ruff and Black (24 Python files). Neither branch was merged or rebased for this check. The temporary combined source snapshot and logs are indexed under `stage0-review-fixes/`; no code change on PR #2 is required by these fixes, and its branch head remains unchanged.
 
 The sealed August report and all three external manifest artifacts match their pre-edit SHA-256, byte count and mtime exactly. Stage 0 was not rerun, manifests were not regenerated, and corpus/manifests remained read-only. All executable regression inputs were synthetic temporary fixtures. S1–S7 each receive one new attributed commit. The authorized closeout is an ordinary push to PR #1's existing branch, leaving both PRs open and unmerged; final published heads and links are recorded in the staging index after the push.
+
+## 2026-10-05 authorized T1–T3 review round
+
+Don authorized Action Registry `rec4acLZWCuN1tJk9` at 09:15 EDT after stating at 09:13 EDT that no response content was vetoed. Scope is the T1–T3 findings from Greptile and Codex reviews of `164d094`, one attributed commit per ID, followed by another Greptile/Codex review gate. If neither reviewer reports a new P1/P2, the authorization includes merge commits for PR #1 and PR #2, retargeting PR #2 to main, and fast-forwarding local main. Any new P1/P2 stops the merge sequence. The sealed August report and artifacts remain read-only and must not be regenerated.
+
+### T1: Record supplied D2 arguments
+
+When `main(argv)` is used, D2 now records the resolved script path followed by that supplied argument vector in `provenance.command`; a normal CLI invocation continues to record `sys.argv`. The dedicated synthetic integration regression supplies paths and numeric parameters while setting unrelated host-process arguments. It failed by recording only `hosting-process --unrelated-host-option`, then passed with the exact supplied vector. Full suite: **152 passed**. No sealed artifact was changed.

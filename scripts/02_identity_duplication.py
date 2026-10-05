@@ -258,7 +258,7 @@ def main(argv: list[str] | None = None) -> None:
         "host": platform.node(),
         "python_version": platform.python_version(),
         "package_versions": {"pyarrow": pa.__version__, "numpy": np.__version__, "pandas": pd.__version__},
-        "command": shlex.join(sys.argv),
+        "command": shlex.join(sys.argv if argv is None else [str(Path(__file__).resolve()), *argv]),
         "inputs": {
             "target_ids_parquet": {
                 "path": str(args.work_dir / TARGET_IDS_FILENAME),
