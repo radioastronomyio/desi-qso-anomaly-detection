@@ -100,3 +100,9 @@ D4 now recomputes per-file null-SNR, nonfinite-redshift and nonpositive-redshift
 ### U3: Record supplied arguments in D3, D4 and D6 provenance
 
 D3, D4 and D6 now mirror D2: programmatic `main(argv)` calls record the resolved script path followed by the supplied argument vector, while normal CLI calls continue to record `sys.argv`. Three synthetic end-to-end regressions set unrelated host-process arguments and invoke each stage with explicit paths and options. All three failed by recording the host command before the fix and now record the supplied invocation exactly. Full Stage 0 suite: **160 passed**; repository-focused Ruff and Black checks pass after applying Ruff's import ordering. No corpus or sealed artifact was read or regenerated.
+
+### Merge closeout
+
+PR #1's new head `86354c43c38386e79dad34c56cad548c0134d31b` passed CodeQL and the completed Codex review reported no P1. Its two new P2 findings concern configurable D2 holdout labeling and range validation; neither says the published manifests or sealed August record are wrong. Per Don's merge rule, they were deferred to linked GitHub issues [#3](https://github.com/radioastronomyio/desi-qso-anomaly-detection/issues/3) and [#4](https://github.com/radioastronomyio/desi-qso-anomaly-detection/issues/4). PR #1 was manually merged into `main` with merge commit **`65c12cc2ecc29d84d787d53ba17f15e84bb541e3`**.
+
+PR #2 was then retargeted from the merged Stage 0 branch to `main`. GitHub reported it `MERGEABLE` with a `CLEAN` merge state, and it was manually merged with merge commit **`ec508b80a3039676c1793ec003d1989ef436516a`**. Local `main` was fast-forwarded to the merged remote history. On that combined tree, the final suite passed **207 tests in 4.50 seconds**, repository-wide Ruff passed, and Black left **24 files unchanged**. Neither merge used auto-merge; no corpus, external manifest, or sealed August artifact was modified or regenerated.
