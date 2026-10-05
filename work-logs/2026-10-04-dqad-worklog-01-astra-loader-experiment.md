@@ -185,3 +185,9 @@ All eight manifest-loader tests pass. An in-memory mutation changing `searchsort
 Before the fix, regressions demonstrated that omitting W1 or moving W2 to the end changed its selected rows. They now pass, and each W1/W2/W3 subset exactly matches the corresponding full-selection result. Full suite: **173 passed**. Ruff/Black checks pass. Tests use synthetic manifests only; no data experiment was rerun.
 
 **Reference sample for the next unit:** `/opt/agents/repos/desi-qso-anomaly-detection/staging/2026-10-04-astra-loader-experiment/run-01/W2-selection.csv`; SHA-256 `229e16debf3688edb3799876e5424d7050a49f3dfa55928ca2995bb2b56cc997`; 94,101 bytes; 768 unique targets, split into 576 training and 192 holdout rows with zero shared tiles. The original source state is `85bb364`. The next unit must load that file and its recorded split rather than regenerate it with the new sampler. `review-fixes/W2-reference-sample.json` and the staging README carry the same explicit handoff. All run-01 files remain the original recorded evidence.
+
+### R4: Builder attribution and prospective commit trailers
+
+Updated PR #2's body with explicit builder attribution: **GPT, Astra, GPT Work DESI project, spec `2026-10-04-dqad-spec-01`**. Read the published body back and verified that exact attribution. Existing reviewer-generated body content was preserved. This attribution applies to the original loader unit as well as this fix round; the original gate commits remain unchanged.
+
+Every new fix commit, beginning with R1, carries the established `Co-authored-by: astronomy-coding-bot <astronomy-coding-bot@radioastronomy.site>` identity, `Model: GPT (Astra; GPT Work DESI project)`, and `Spec: 2026-10-04-dqad-spec-01`. R1/R2/R3 commits are `d83404d`, `b978d57` and `1118eae`; this R4 checkpoint and the remaining fixes use the same trailer block. This documentation-only item requires no new numerical test. No rebase, amendment or history rewrite was performed.
