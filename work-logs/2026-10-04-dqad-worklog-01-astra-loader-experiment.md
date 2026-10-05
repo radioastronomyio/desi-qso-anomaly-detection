@@ -95,3 +95,13 @@ Runtime: ML01, Python 3.12.3, NumPy 2.4.3, PyArrow 23.0.1, pandas 3.0.1, SciPy 1
 Self-review: each gate has discriminating validation; all user deliverables have an owning plan task; exact committed-file scope is preserved. User-selected staging and worklog paths supersede generic workflow locations; the worklog is the execution ledger, and no cleanup deletion is permitted.
 
 Gate 0 spec SHA-256: `0b188e3c3342d381adbebcef3301deb2e3ecd8e1b1aedbafec646fd63822c802`. Gate 0 commit includes only this worklog.
+
+## 7. Gate 1: Experimental Loader
+
+Implemented `spectral_loader.py` and `manifest_loader.py` within the existing audit package, plus 27 discriminating tests. Stable exact-wavelength coaddition excludes masked, zero-weight, and nonfinite-flux contributions; source mask bits are separate from merged validity. Rest-frame bins use piecewise-constant native pixels and squared overlap coefficients for variance. A bin with incomplete valid support has zero weight rather than a fabricated interpolation. Manifest row_uids are resolved to file row groups and checked against target_id, redshift, array length, source stats, and the measured wavelength contract.
+
+Evidence: the new tests initially failed because the two implementation modules did not exist, then all 27 passed. Full repository suite: **160 passed in 0.85s**. Focused Ruff and Black checks pass; `git diff --check` is clean. Tests cover unequal ivar coaddition, masked/all-invalid duplicates, exact versus near-equal wavelengths, audit shape and breaks, hand-calculated resampling variance, masks/zero-ivar/extrapolation, rest coordinates and window endpoints, manifest membership, identity, outside paths and live contract changes.
+
+The nine-row live smoke check passed over three seeded rows per candidate, with all 7,927 input pixels satisfying the audit contract. Output grids contain 799/530/249 bins for W1/W2/W3; valid-pixel counts were 779–792 / 519–530 / 249. Evidence: `staging/2026-10-04-astra-loader-experiment/gate1-smoke.json`, including exact target IDs, row_uids and rest bounds. All selected source size/mtime pairs and both manifest hashes were unchanged. No rr_chi2 proxy was introduced.
+
+Limitations carried forward: independent-arm diagonal noise assumption, induced covariance between bins sharing native pixels, and observed flux-density amplitudes on transformed wavelength coordinates. Gate 1 does not make a physical-anomaly claim. No new scope boundary was encountered.
