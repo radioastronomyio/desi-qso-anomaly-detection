@@ -171,3 +171,9 @@ MPLCONFIGDIR=/tmp/dqad-pr2-matplotlib OPENBLAS_NUM_THREADS=2 \
 ```
 
 The concrete validation used newly created `/tmp/dqad-pr2-review-venv.l0PnUN`, without system/shared site packages. `pip install '.[dev]'` built and installed the package successfully; **167 tests passed in 2.10s**; `pip check` reported no broken requirements. An isolated (`python -I`) import resolved `dqad_audit.experiment` from that environment's installed package, with SciPy 1.18.1 and Matplotlib 3.11.2, and no shared-venv path. Full resolved versions and install/test logs are preserved under `review-fixes/R1-*`. The initial metadata failure is retained in `R1-install.log`; its successful correction is in `R1-install-retry.log`. Run-01 was not rerun or changed.
+
+### R2: Parquet row-group boundary regression coverage
+
+Extended the temporary archive fixture to write multiple rows and configurable row-group sizes. The new test writes seven distinct spectra in groups of sizes `[2,2,2,1]` and requests offsets `[6,2,1,4,3]`. It crosses both sides of group boundaries, including offsets 2, 4 and 6 exactly equal to cumulative group ends, and checks exact target IDs, redshifts, full flux arrays, selected row_uids, and unchanged source size/mtime.
+
+All eight manifest-loader tests pass. An in-memory mutation changing `searchsorted(..., side="right")` to `side="left"` makes the new test fail at a boundary; the checked-out implementation was never changed. Full suite: **168 passed**. Focused Ruff/Black pass. The previously deferred multi-row-group coverage item is now resolved; no loader algorithm change was needed.

@@ -10,17 +10,25 @@ from dqad_audit.manifest_loader import ManifestLoader
 from test_spectral_loader import audit_row
 
 
-def make_archive(tmp_path):
+def make_archive(tmp_path, row_count=1, row_group_size=None):
     root = tmp_path / "corpus"
     root.mkdir()
     path = root / "tile.parquet"
-    row = {k: v.tolist() for k, v in audit_row().items()}
-    row.update(target_id=42, z=1.6)
-    pq.write_table(pa.Table.from_pylist([row]), path)
+    rows = []
+    for offset in range(row_count):
+        row = {k: v.tolist() for k, v in audit_row().items()}
+        row.update(target_id=42 + offset, z=1.6 + offset * 0.001, flux=[1.0 + offset] * 7927)
+        rows.append(row)
+    pq.write_table(pa.Table.from_pylist(rows), path, row_group_size=row_group_size)
     manifests = tmp_path / "manifests"
     manifests.mkdir()
-    files = pd.DataFrame([dict(tile_id="7", path=str(path), size_bytes=path.stat().st_size, n_rows_actual=1)])
-    objects = pd.DataFrame([dict(tile_id="7", row_uid="7:0", target_id=42, z=1.6, array_length=7927)])
+    files = pd.DataFrame([dict(tile_id="7", path=str(path), size_bytes=path.stat().st_size, n_rows_actual=row_count)])
+    objects = pd.DataFrame(
+        [
+            dict(tile_id="7", row_uid=f"7:{offset}", target_id=row["target_id"], z=row["z"], array_length=7927)
+            for offset, row in enumerate(rows)
+        ]
+    )
     files.to_parquet(manifests / "qso_file_manifest_v1.parquet", index=False)
     objects.to_parquet(manifests / "qso_object_manifest_v1.parquet", index=False)
     return root, manifests, objects, path
@@ -77,3 +85,22 @@ def test_rejects_unexpected_live_contract(tmp_path):
     files.to_parquet(manifests / "qso_file_manifest_v1.parquet", index=False)
     with pytest.raises(ValueError, match="contract"):
         list(ManifestLoader(manifests, root).load(objects))
+
+
+def test_selected_offsets_span_row_groups_and_exact_group_ends(tmp_path):
+    root, manifests, objects, path = make_archive(tmp_path, row_count=7, row_group_size=2)
+    parquet = pq.ParquetFile(path)
+    assert [parquet.metadata.row_group(i).num_rows for i in range(parquet.num_row_groups)] == [2, 2, 2, 1]
+    before = path.stat()
+    # 1/2 and 3/4 straddle boundaries; 2, 4, 6 equal cumulative group ends.
+    selected = objects.iloc[[6, 2, 1, 4, 3]]
+    loaded = list(ManifestLoader(manifests, root).load(selected))
+    assert len(loaded) == 5
+    expected = {"7:1": (43, 2.0), "7:2": (44, 3.0), "7:3": (45, 4.0), "7:4": (46, 5.0), "7:6": (48, 7.0)}
+    assert {record["row_uid"] for record, _ in loaded} == set(expected)
+    for record, row in loaded:
+        target_id, flux = expected[record["row_uid"]]
+        assert record["target_id"] == row["target_id"] == target_id
+        assert record["z"] == row["z"]
+        np.testing.assert_array_equal(row["flux"], np.full(7927, flux))
+    assert (path.stat().st_size, path.stat().st_mtime_ns) == (before.st_size, before.st_mtime_ns)
