@@ -28,3 +28,9 @@ Starting Stage 0 head: `dc14bed6044e02bf99a70bf6cc4fda547ab167b6`. Loader PR #2 
 D3 now discards the entire failed chunk from checkpoint publication and aborts before assembling or publishing the final array audit and success summary. Each failed selected path and its read error are logged. Successfully completed independent chunks may remain resumable; a chunk containing even one failed file is never written as complete.
 
 Two synthetic integration regressions exercise a corrupt Parquet file and a readable file missing a required array column. Both previously completed without raising; both now abort with no partial checkpoint, final table or success summary. Full Stage 0 suite: **135 passed**. Focused Ruff/Black pass. No real corpus input was used by these tests.
+
+## S2: Verify checkpoint completeness before reuse
+
+D3 and D4 now require a known expected chunk row count and a matching readable checkpoint before reuse. An absent inventory or incomplete count mapping forces a rescan. D4 also no longer writes failed chunks. This policy handles legacy partial checkpoints without trusting their readability or forgetting a source failure; no new checkpoint metadata or manifest schema is needed. Complete inventory-backed checkpoints still resume without rewriting their part files.
+
+Five regressions failed before the change: both stages reused legacy partial chunks with no inventory, both forgot a still-unreadable source on resume, and D4 wrote failed partial chunks. All now pass. The existing D3 resume test now supplies inventory counts to exercise verified reuse. Full suite: **140 passed**; focused Ruff/Black pass. The operational README records that missing counts disable reuse and cause rescanning. Existing failed legacy parts can remain on disk for inspection but are never accepted without a matching expected count.

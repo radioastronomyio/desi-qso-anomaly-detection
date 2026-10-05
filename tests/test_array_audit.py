@@ -395,7 +395,12 @@ def run_script(module, corpus_root: Path, work_dir: Path, *, seed: int, rows_per
 def test_script_end_to_end_resume_and_fence(tmp_path: Path, audit) -> None:
     corpus = tmp_path / "corpus"
     work_dir = tmp_path / "work"
-    write_audit_corpus(corpus, [("tile_10000", 3), ("tile_10001", 3), ("tile_10002", 3)])
+    files = write_audit_corpus(corpus, [("tile_10000", 3), ("tile_10001", 3), ("tile_10002", 3)])
+    work_dir.mkdir()
+    pq.write_table(
+        pa.table({"path": [str(path) for path in files], "n_rows_actual": [3, 3, 3]}),
+        work_dir / "inventory.parquet",
+    )
     run_script(audit, corpus, work_dir, seed=20260815)
     final = pq.read_table(work_dir / ARRAY_AUDIT_FILENAME)
     assert final.schema.names == ARRAY_AUDIT_SCHEMA.names
@@ -488,3 +493,32 @@ def test_read_failure_aborts_without_partial_checkpoint_or_summary(tmp_path, aud
     assert not list((work_dir / "parts" / ARRAY_AUDIT_PART_KIND).glob("*.parquet"))
     assert not (work_dir / ARRAY_AUDIT_FILENAME).exists()
     assert not (work_dir / ARRAY_AUDIT_SUMMARY_FILENAME).exists()
+
+
+@pytest.mark.parametrize("source_unreadable", [False, True])
+def test_resume_without_inventory_rechecks_legacy_partial_chunk(tmp_path, audit, source_unreadable):
+    corpus = tmp_path / "corpus"
+    work_dir = tmp_path / "work"
+    files = write_audit_corpus(corpus, [("tile_10000", 3), ("tile_10001", 3)])
+    config = build_array_audit_run_config(
+        corpus, files, seed=20260815, target_tiles=2, rows_per_tile=2, neardup_tolerance=0.1, chunk_size=2
+    )
+    audit.apply_sampling_fence(work_dir, config)
+    tasks = audit.build_tasks(files, 20260815, 2, 0.1)
+    legacy = array_audit_part_table(audit_chunk(tasks[:1])["rows"])
+    part = work_dir / "parts" / ARRAY_AUDIT_PART_KIND / "0000.parquet"
+    pq.write_table(legacy, part)
+    before = part.read_bytes()
+    if source_unreadable:
+        files[1].write_bytes(b"unreadable source")
+        with pytest.raises(SystemExit, match="failed to read"):
+            run_script(audit, corpus, work_dir, seed=20260815)
+        assert part.read_bytes() == before
+        assert not (work_dir / ARRAY_AUDIT_FILENAME).exists()
+        assert not (work_dir / ARRAY_AUDIT_SUMMARY_FILENAME).exists()
+    else:
+        run_script(audit, corpus, work_dir, seed=20260815)
+        assert pq.read_table(part).num_rows == 4
+        result = pq.read_table(work_dir / ARRAY_AUDIT_FILENAME)
+        assert result.num_rows == 4
+        assert result.column("tile_id").to_pylist() == ["10000", "10000", "10001", "10001"]

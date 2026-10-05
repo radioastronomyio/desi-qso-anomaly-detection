@@ -176,11 +176,13 @@ def load_inventory_row_counts(work_dir: Path) -> dict[str, int] | None:
     -------
     dict[str, int] or None
         Mapping of file path to actual row count, or None when the D1
-        output is absent (part resume then falls back to readability).
+        output is absent (unverifiable parts must then be rescanned).
     """
     path = work_dir / INVENTORY_FILENAME
     if not path.is_file():
-        logger.warning("no %s in %s; part resume will use readability checks only", INVENTORY_FILENAME, work_dir)
+        logger.warning(
+            "no %s in %s; checkpoint reuse disabled without expected row counts", INVENTORY_FILENAME, work_dir
+        )
         return None
     table = read_part(path)
     return dict(zip(table.column("path").to_pylist(), table.column("n_rows_actual").to_pylist()))
@@ -294,7 +296,8 @@ def run_audit(
     pending = [
         index
         for index in range(len(chunks))
-        if not part_is_valid(part_filepath(work_dir, ARRAY_AUDIT_PART_KIND, index), expected_rows=expected_rows[index])
+        if expected_rows[index] is None
+        or not part_is_valid(part_filepath(work_dir, ARRAY_AUDIT_PART_KIND, index), expected_rows=expected_rows[index])
     ]
     skipped = total_files - sum(len(chunks[index]) for index in pending)
     logger.info(

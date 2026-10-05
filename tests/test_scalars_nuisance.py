@@ -532,3 +532,47 @@ def test_build_redshift_summary_blocks(tmp_path: Path) -> None:
 def test_build_nuisance_block_aligned_validation() -> None:
     with pytest.raises(ValueError):
         build_nuisance_block([1.0], [0.5, 0.5])
+
+
+@pytest.mark.parametrize("source_unreadable", [False, True])
+def test_resume_without_inventory_rechecks_legacy_partial_chunk(tmp_path, script, source_unreadable):
+    corpus = tmp_path / "corpus"
+    work_dir = tmp_path / "work"
+    files = write_scalars_corpus(corpus, [("tile_10000", 3), ("tile_10001", 3)])
+    script.apply_run_fence(work_dir, build_scalars_run_config(corpus, files, chunk_size=2))
+    tasks = script.build_tasks(files)
+    legacy = per_object_part_table(scalars_chunk(tasks[:1])["rows"])
+    part = work_dir / "parts" / SCALARS_PART_KIND / "0000.parquet"
+    pq.write_table(legacy, part)
+    before = part.read_bytes()
+    if source_unreadable:
+        files[1].write_bytes(b"unreadable source")
+        with pytest.raises(SystemExit, match="failed to read"):
+            run_script(script, corpus, work_dir)
+        assert part.read_bytes() == before
+        assert not (work_dir / PER_OBJECT_FILENAME).exists()
+        assert not (work_dir / REDSHIFT_SUMMARY_FILENAME).exists()
+    else:
+        run_script(script, corpus, work_dir)
+        assert pq.read_table(part).num_rows == 6
+        result = pq.read_table(work_dir / PER_OBJECT_FILENAME)
+        assert result.column("row_uid").to_pylist() == [
+            "10000:0",
+            "10000:1",
+            "10000:2",
+            "10001:0",
+            "10001:1",
+            "10001:2",
+        ]
+
+
+def test_scalar_read_failure_does_not_checkpoint_partial_rows(tmp_path, script):
+    corpus = tmp_path / "corpus"
+    work_dir = tmp_path / "work"
+    files = write_scalars_corpus(corpus, [("tile_10000", 3), ("tile_10001", 3)])
+    files[1].write_bytes(b"unreadable source")
+    with pytest.raises(SystemExit, match="failed to read"):
+        run_script(script, corpus, work_dir)
+    assert not list((work_dir / "parts" / SCALARS_PART_KIND).glob("*.parquet"))
+    assert not (work_dir / PER_OBJECT_FILENAME).exists()
+    assert not (work_dir / REDSHIFT_SUMMARY_FILENAME).exists()
