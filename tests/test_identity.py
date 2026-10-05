@@ -312,8 +312,7 @@ def test_summary_rates_gap_and_holdout_derived_from_data(converter_source) -> No
         'if row["SPECTYPE"] == "QSO" and row["ZWARN"] == 0'
     )
     assert summary["gap_accounting"]["accounting"] == (
-        "consistent with the converter's SPECTYPE==QSO and ZWARN==0 filter; "
-        "the excluded count was not measured"
+        "consistent with the converter's SPECTYPE==QSO and ZWARN==0 filter; " "the excluded count was not measured"
     )
     assert summary["holdout"]["required"] is True
     assert summary["holdout"]["expected_leakage_naive_90_10"] == pytest.approx(3 * 0.18)
@@ -362,3 +361,42 @@ def test_summary_rejects_inconsistent_totals(converter_source) -> None:
             converter_filter=converter_filter_block(converter_source),
             provenance={"command": "synthetic"},
         )
+
+
+def test_identity_main_uses_supplied_paths_and_population(tmp_path, converter_source, monkeypatch):
+    import importlib.util
+    import sys
+    from pathlib import Path
+
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+
+    path = Path(__file__).resolve().parents[1] / "scripts" / "02_identity_duplication.py"
+    spec = importlib.util.spec_from_file_location("identity_script", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    work_dir = tmp_path / "requested-work"
+    work_dir.mkdir()
+    pq.write_table(
+        pa.table({"tile_id": TILES, "row_idx": [0, 1, 2, 0, 1, 0, 1], "target_id": TIDS}),
+        work_dir / "target_ids.parquet",
+    )
+    monkeypatch.setattr(sys, "argv", ["hosting-process", "--unrelated-host-option"])
+    module.main(
+        [
+            "--work-dir",
+            str(work_dir),
+            "--converter-source",
+            str(converter_source),
+            "--population-reference",
+            "10",
+            "--holdout-fraction",
+            "0.2",
+        ]
+    )
+    summary = json.loads((work_dir / "identity_summary.json").read_text())
+    assert summary["totals"]["total_rows"] == 7
+    assert summary["gap_accounting"]["population_reference"] == 10
+    assert summary["gap_accounting"]["gap"] == 6
+    assert summary["gap_accounting"]["converter_filter"]["source_path"] == str(converter_source)
+    assert summary["holdout"]["expected_leakage_naive_90_10"] == pytest.approx(0.96)

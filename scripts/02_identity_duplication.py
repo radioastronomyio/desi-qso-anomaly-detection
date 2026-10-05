@@ -218,7 +218,7 @@ def main(argv: list[str] | None = None) -> None:
         Command-line arguments; defaults to sys.argv[1:].
     """
     setup_logging()
-    args = parse_args()
+    args = parse_args(argv)
     start = time.perf_counter()
     tile_ids, target_ids, total_rows = load_target_ids(args.work_dir)
     distribution = repeat_distribution(target_ids)
