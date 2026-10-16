@@ -5,7 +5,7 @@ description: "Authorized S1–S7 robustness fixes and qualifications, preserving
 author: "GPT, Astra, GPT Work DESI project"
 date: "2026-10-04"
 version: "1.0"
-status: "under-review"
+status: "archived"
 tags:
   - type: worklog
   - domain: spectral-analysis
